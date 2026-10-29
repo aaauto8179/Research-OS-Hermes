@@ -1,0 +1,27 @@
+Metadata-Version: 2.4
+Name: fros-data-ingestion
+Version: 0.1.0
+Summary: Data Ingestion Layer for Fundamental Research OS
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+Requires-Dist: aiohttp>=3.9.0
+Requires-Dist: feedparser>=6.0.0
+Requires-Dist: beautifulsoup4>=4.12.0
+Requires-Dist: pdfplumber>=0.11.0
+Requires-Dist: camelot-py[cv]>=0.11.0
+Requires-Dist: pandas>=2.1.0
+Requires-Dist: numpy>=1.26.0
+Requires-Dist: pydantic>=2.5.0
+Requires-Dist: python-dateutil>=2.8.0
+Provides-Extra: dev
+Requires-Dist: pytest>=7.4.0; extra == "dev"
+Requires-Dist: pytest-cov>=4.1.0; extra == "dev"
+Requires-Dist: pytest-asyncio>=0.23.0; extra == "dev"
+Requires-Dist: black>=23.0.0; extra == "dev"
+Requires-Dist: ruff>=0.1.0; extra == "dev"
+Requires-Dist: mypy>=1.5.0; extra == "dev"
+Provides-Extra: test
+Requires-Dist: pytest>=7.4.0; extra == "test"
+Requires-Dist: pytest-cov>=4.1.0; extra == "test"
+Requires-Dist: pytest-asyncio>=0.23.0; extra == "test"
+Requires-Dist: pytest-mock>=3.12.0; extra == "test"

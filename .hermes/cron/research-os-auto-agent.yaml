@@ -1,0 +1,254 @@
+# Research OS - Hermes Cron Job
+# Runs every 3 hours when idle to check for pending work and auto-improve
+
+name: research-os-auto-agent
+schedule: "0 */3 * * *"  # Every 3 hours at minute 0
+timezone: "Asia/Kolkata"
+description: "Auto-agent that checks for pending work, runs tests, fixes issues, and browses the site to find improvements"
+
+# Only run when system is relatively idle
+idle_threshold: 30  # CPU % threshold
+concurrency: 1      # Only one instance at a time
+timeout: 1800       # 30 minutes max
+
+# Environment
+env:
+  NODE_ENV: production
+  RESEARCH_OS_ROOT: "{{cwd}}"
+
+# Steps to execute
+steps:
+  - name: "Check system idle"
+    run: |
+      cpu=$(top -bn1 | grep "Cpu(s)" | awk '{print $2}' | sed 's/%us,//' | cut -d. -f1)
+      if [ "$cpu" -gt 30 ]; then
+        echo "System busy (CPU: ${cpu}%), skipping"
+        exit 1
+      fi
+      echo "System idle (CPU: ${cpu}%), proceeding"
+
+  - name: "Check for pending work"
+    run: |
+      cd {{cwd}}
+      work_found=false
+      
+      # Uncommitted changes
+      if ! git diff --quiet 2>/dev/null || ! git diff --cached --quiet 2>/dev/null; then
+        echo "Uncommitted changes found"
+        work_found=true
+      fi
+      
+      # Untracked files
+      if [ -n "$(git status --porcelain 2>/dev/null | grep '^??')" ]; then
+        echo "Untracked files found"
+        work_found=true
+      fi
+      
+      # Failing tests
+      if [ -f "research-os-frontend/package.json" ]; then
+        cd research-os-frontend
+        if ! npm test -- --passWithNoTests 2>&1 | grep -q "passed"; then
+          echo "Frontend tests failing"
+          work_found=true
+        fi
+        cd ..
+      fi
+      
+      if [ -f "math-engine/pyproject.toml" ]; then
+        cd math-engine
+        if ! python -m pytest --tb=no -q 2>&1 | grep -q "passed"; then
+          echo "Math engine tests failing"
+          work_found=true
+        fi
+        cd ..
+      fi
+      
+      # Build failures
+      if [ -f "research-os-frontend/package.json" ]; then
+        cd research-os-frontend
+        if ! npm run build --dry-run 2>&1 >/dev/null; then
+          echo "Frontend build failing"
+          work_found=true
+        fi
+        cd ..
+      fi
+      
+      # Linting
+      if [ -f "research-os-frontend/package.json" ]; then
+        cd research-os-frontend
+        if ! npm run lint 2>&1 >/dev/null; then
+          echo "Linting errors found"
+          work_found=true
+        fi
+        cd ..
+      fi
+      
+      # TODO/FIXME
+      todo_count=$(grep -r "TODO|FIXME" --include="*.ts" --include="*.tsx" --include="*.py" . 2>/dev/null | wc -l)
+      if [ "$todo_count" -gt 0 ]; then
+        echo "$todo_count TODO/FIXME comments found"
+        work_found=true
+      fi
+      
+      if [ "$work_found" = true ]; then
+        echo "WORK_FOUND=true" >> $HERMES_ENV
+      else
+        echo "WORK_FOUND=false" >> $HERMES_ENV
+      fi
+
+  - name: "Auto-fix linting errors"
+    if: "${{ env.WORK_FOUND == 'true' }}"
+    run: |
+      cd research-os-frontend
+      echo "Attempting auto-fix linting..."
+      npm run lint -- --fix 2>&1 | tail -20
+      # Re-check
+      if npm run lint 2>&1 >/dev/null; then
+        echo "Linting errors fixed!"
+        git add -A
+        git commit -m "chore: auto-fix linting errors" 2>/dev/null || true
+      else
+        echo "Some linting errors remain"
+      fi
+
+  - name: "Run tests and capture failures"
+    if: "${{ env.WORK_FOUND == 'true' }}"
+    run: |
+      # Frontend tests
+      if [ -f "research-os-frontend/package.json" ]; then
+        cd research-os-frontend
+        npm test -- --reporter=verbose 2>&1 | tee test-results.log
+        cd ..
+      fi
+      
+      # Math engine tests
+      if [ -f "math-engine/pyproject.toml" ]; then
+        cd math-engine
+        python -m pytest -v 2>&1 | tee math-test-results.log
+        cd ..
+      fi
+
+  - name: "Analyze test failures and create fixes"
+    if: "${{ env.WORK_FOUND == 'true' }}"
+    run: |
+      # Parse test failures and generate fix suggestions
+      if [ -f "research-os-frontend/test-results.log" ]; then
+        echo "=== Frontend Test Failures ===" >> fix-suggestions.md
+        grep -A 5 "FAIL|Error" research-os-frontend/test-results.log | head -50 >> fix-suggestions.md
+      fi
+      
+      if [ -f "math-engine/math-test-results.log" ]; then
+        echo "=== Math Engine Test Failures ===" >> fix-suggestions.md
+        grep -A 5 "FAIL|Error" math-engine/math-test-results.log | head -50 >> fix-suggestions.md
+      fi
+      
+      # Generate fix commit if simple fixes available
+      if [ -f "fix-suggestions.md" ]; then
+        echo "Fix suggestions generated" >> $HERMES_LOG
+      fi
+
+  - name: "Check for improvements"
+    run: |
+      improvements=false
+      
+      # Large files
+      large_files=$(find . -name "*.tsx" -o -name "*.ts" -o -name "*.py" | xargs wc -l 2>/dev/null | awk '$1 > 500 {print $2 " (" $1 " lines)"}')
+      if [ -n "$large_files" ]; then
+        echo "Large files (>500 lines):" >> improvements.md
+        echo "$large_files" >> improvements.md
+        improvements=true
+      fi
+      
+      # Missing tests
+      untested=0
+      for f in $(find math-engine/src -name "*.py" ! -name "test_*" ! -name "__init__.py" 2>/dev/null); do
+        basename=$(basename "$f" .py)
+        if ! find math-engine/tests -name "test_$basename.py" | grep -q .; then
+          echo "Missing test: $f" >> improvements.md
+          ((untested++))
+        fi
+      done
+      if [ "$untested" -gt 0 ]; then
+        echo "$untested modules missing tests" >> improvements.md
+        improvements=true
+      fi
+      
+      # Missing error boundaries
+      if ! grep -r "ErrorBoundary" --include="*.tsx" src/ 2>/dev/null | head -1; then
+        echo "No error boundaries found in React components" >> improvements.md
+        improvements=true
+      fi
+      
+      if [ "$improvements" = true ]; then
+        echo "IMPROVEMENTS_FOUND=true" >> $HERMES_ENV
+      fi
+
+  - name: "Browse site and check for UI issues"
+    if: "${{ env.WORK_FOUND == 'true' || env.IMPROVEMENTS_FOUND == 'true' }}"
+    run: |
+      # Start dev server in background
+      cd research-os-frontend
+      npm run dev > dev-server.log 2>&1 &
+      DEV_PID=$!
+      sleep 10
+      
+      # Check key pages
+      pages=("/" "/screening" "/industry" "/portfolio" "/valuation" "/company/RELIANCE" "/watchlist" "/grwth" "/tasks")
+      for page in "${pages[@]}"; do
+        echo "Checking $page..." >> site-check.log
+        status=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:3000$page" 2>/dev/null || echo "000")
+        echo "$page: $status" >> site-check.log
+        if [ "$status" != "200" ]; then
+          echo "PAGE_ISSUE: $page returned $status" >> site-issues.md
+        fi
+      done
+      
+      # Kill dev server
+      kill $DEV_PID 2>/dev/null || true
+      
+      # Check for console errors (would need Playwright for full check)
+      if [ -f "site-issues.md" ]; then
+        echo "SITE_ISSUES=true" >> $HERMES_ENV
+      fi
+
+  - name: "Generate work report"
+    run: |
+      cat > work-report-$(date +%Y%m%d-%H%M%S).md <<'EOF'
+# Research OS Auto-Agent Report
+**Run**: $(date)
+**Trigger**: Scheduled (every 3 hours)
+
+## Work Detected
+- Pending work: {{ env.WORK_FOUND }}
+- Improvements: {{ env.IMPROVEMENTS_FOUND }}
+- Site issues: {{ env.SITE_ISSUES }}
+
+## Actions Taken
+- Auto-fixed linting: $(grep -c "fixed" fix-suggestions.md 2>/dev/null || echo 0) issues
+- Test failures analyzed: $(wc -l fix-suggestions.md 2>/dev/null || echo 0) items
+- Site issues found: $(wc -l site-issues.md 2>/dev/null || echo 0) pages
+- Improvements identified: $(wc -l improvements.md 2>/dev/null || echo 0) items
+
+## Next Steps
+- Review fix-suggestions.md for test failures
+- Review site-issues.md for broken pages
+- Review improvements.md for code quality issues
+- Consider creating GitHub issues for complex fixes
+
+EOF
+
+  - name: "Commit auto-fixes"
+    if: "${{ env.WORK_FOUND == 'true' }}"
+    run: |
+      git add -A 2>/dev/null
+      git commit -m "chore(auto-agent): auto-fixes and improvements [skip ci]" 2>/dev/null || true
+      git push origin HEAD 2>/dev/null || echo "Push failed (may need auth)"
+
+# Notifications
+notifications:
+  on_failure:
+    - type: log
+      message: "Auto-agent failed: {{error}}"
+  on_success:
+    - type: log
+      message: "Auto-agent completed successfully. Work: {{env.WORK_FOUND}}, Improvements: {{env.IMPROVEMENTS_FOUND}}"

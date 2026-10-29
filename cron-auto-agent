@@ -1,0 +1,17 @@
+# Research OS Auto-Agent Cron Job
+# Runs every 3 hours when system is idle
+# Add to crontab: crontab -e
+
+# Environment
+SHELL=/bin/bash
+PATH=/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin
+HOME=/home/aaaut
+RESEARCH_OS_ROOT=/home/aaaut/research-os
+
+# Run every 3 hours at minute 0, but only if system is idle
+0 */3 * * * /home/aaaut/research-os/auto-agent.sh >> /home/aaaut/research-os/logs/auto-agent/cron.log 2>&1
+
+# Alternative: Run at specific times with idle check
+# 0 0,3,6,9,12,15,18,21 * * * /home/aaaut/research-os/auto-agent.sh
+
+# For systemd timer (alternative to cron), see research-os-autoagent.timer

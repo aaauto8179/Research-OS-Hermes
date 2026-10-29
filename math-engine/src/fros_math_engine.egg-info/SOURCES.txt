@@ -1,0 +1,8 @@
+pyproject.toml
+src/fros_math_engine.egg-info/PKG-INFO
+src/fros_math_engine.egg-info/SOURCES.txt
+src/fros_math_engine.egg-info/dependency_links.txt
+src/fros_math_engine.egg-info/requires.txt
+src/fros_math_engine.egg-info/top_level.txt
+src/math_engine/__init__.py
+tests/test_math_engine.py

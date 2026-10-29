@@ -1,0 +1,7 @@
+pyproject.toml
+src/data_ingestion/__init__.py
+src/fros_data_ingestion.egg-info/PKG-INFO
+src/fros_data_ingestion.egg-info/SOURCES.txt
+src/fros_data_ingestion.egg-info/dependency_links.txt
+src/fros_data_ingestion.egg-info/requires.txt
+src/fros_data_ingestion.egg-info/top_level.txt
