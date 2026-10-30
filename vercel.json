@@ -4,12 +4,14 @@
     "data-ingestion": {
       "root": "data-ingestion",
       "runtime": "python",
-      "bindings": []
+      "entrypoint": "api/main.py",
+      "buildCommand": "pip install -r requirements.txt"
     },
     "math-engine": {
       "root": "math-engine",
       "runtime": "python",
-      "bindings": []
+      "entrypoint": "api/main.py",
+      "buildCommand": "pip install -r requirements.txt"
     },
     "research-os-frontend": {
       "root": "research-os-frontend",
