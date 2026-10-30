@@ -1,0 +1,10 @@
+{
+  "name": "research-os-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "install": "echo 'Monorepo - services installed individually'",
+    "build": "true",
+    "postinstall": "echo 'Services install handled by Vercel'"
+  }
+}
