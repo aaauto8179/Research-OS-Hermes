@@ -1,0 +1,43 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "services": {
+    "data-ingestion": {
+      "root": "data-ingestion",
+      "runtime": "python",
+      "bindings": []
+    },
+    "math-engine": {
+      "root": "math-engine",
+      "runtime": "python",
+      "bindings": []
+    },
+    "research-os-frontend": {
+      "root": "research-os-frontend",
+      "framework": "nextjs",
+      "bindings": [
+        {
+          "type": "service",
+          "service": "data-ingestion",
+          "format": "url",
+          "env": "DATA_INGESTION_URL"
+        },
+        {
+          "type": "service",
+          "service": "math-engine",
+          "format": "url",
+          "env": "MATH_ENGINE_URL"
+        }
+      ]
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/data-ingestion/(.*)",
+      "destination": { "service": "data-ingestion" }
+    },
+    {
+      "source": "/api/math-engine/(.*)",
+      "destination": { "service": "math-engine" }
+    }
+  ]
+}
