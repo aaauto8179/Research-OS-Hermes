@@ -5,126 +5,85 @@ Handles document extraction, classification, and PIT-compliant storage.
 import json
 import os
 import sys
-from http.server import BaseHTTPRequestHandler
-from typing import Dict, Any
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-# Import data ingestion modules
-# from data_ingestion.extractors import DocumentExtractor
-# from data_ingestion.classifiers import DocumentClassifier
-# from data_ingestion.pit import PITTransformer
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
-class DataIngestionHandler(BaseHTTPRequestHandler):
-    def do_OPTIONS(self):
-        self.send_response(200)
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-        self.end_headers()
+app = FastAPI(title="Research OS Data Ingestion", version="1.0.0")
 
-    def do_POST(self):
-        content_length = int(self.headers.get('Content-Length', 0))
-        body = self.rfile.read(content_length).decode('utf-8') if content_length > 0 else '{}'
-        
-        try:
-            data = json.loads(body) if body else {}
-        except json.JSONDecodeError:
-            self.send_error_response(400, "Invalid JSON")
-            return
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-        path = self.path
-        
-        try:
-            if path == '/extract':
-                result = self.handle_extract(data)
-            elif path == '/classify':
-                result = self.handle_classify(data)
-            elif path == '/pit-transform':
-                result = self.handle_pit_transform(data)
-            elif path == '/ingest':
-                result = self.handle_ingest(data)
-            else:
-                self.send_error_response(404, f"Endpoint not found: {path}")
-                return
-            
-            self.send_json_response(200, result)
-            
-        except Exception as e:
-            self.send_error_response(500, str(e))
 
-    def do_GET(self):
-        if self.path == '/health':
-            self.send_json_response(200, {"status": "healthy", "service": "data-ingestion"})
-        else:
-            self.send_error_response(404, f"Endpoint not found: {self.path}")
+@app.get("/health")
+async def health():
+    return {"status": "healthy", "service": "data-ingestion"}
 
-    def handle_extract(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        # Extract text from document
-        document = data.get('document', {})
-        content = data.get('content', '')
-        
-        # Mock extraction - replace with actual implementation
-        return {
-            "text": content,
-            "tables": [],
-            "metadata": {
-                "pages": 1,
-                "word_count": len(content.split()),
-            }
+
+@app.post("/extract")
+async def extract(request: Request):
+    data = await request.json()
+    document = data.get('document', {})
+    content = data.get('content', '')
+
+    return JSONResponse(content={
+        "text": content,
+        "tables": [],
+        "metadata": {
+            "pages": 1,
+            "word_count": len(content.split()),
         }
+    })
 
-    def handle_classify(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        document = data.get('document', {})
-        
-        # Mock classification - replace with actual implementation
-        return {
-            "doc_type": "ANNUAL_REPORT",
-            "confidence": 0.95,
-            "metadata": {}
-        }
 
-    def handle_pit_transform(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        records = data.get('records', [])
-        
-        # Mock PIT transformation
-        transformed = []
-        for record in records:
-            transformed.append({
-                **record,
-                "pit_timestamp": "2024-01-01T00:00:00Z",
-                "filing_date": record.get("filing_date", "2024-01-01"),
-            })
-        return {"records": transformed}
+@app.post("/classify")
+async def classify(request: Request):
+    data = await request.json()
+    document = data.get('document', {})
 
-    def handle_ingest(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        document = data.get('document', {})
-        
-        # Mock ingestion
-        return {
-            "document_id": "doc_123",
-            "status": "ingested",
-            "chunks": 5,
-        }
+    return JSONResponse(content={
+        "doc_type": "ANNUAL_REPORT",
+        "confidence": 0.95,
+        "metadata": {}
+    })
 
-    def send_json_response(self, status: int, data: Any):
-        self.send_response(status)
-        self.send_header('Content-Type', 'application/json')
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.end_headers()
-        self.wfile.write(json.dumps(data).encode('utf-8'))
 
-    def send_error_response(self, status: int, message: str):
-        self.send_response(status)
-        self.send_header('Content-Type', 'application/json')
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.end_headers()
-        self.wfile.write(json.dumps({"error": message}).encode('utf-8'))
+@app.post("/pit-transform")
+async def pit_transform(request: Request):
+    data = await request.json()
+    records = data.get('records', [])
+
+    transformed = []
+    for record in records:
+        transformed.append({
+            **record,
+            "pit_timestamp": "2024-01-01T00:00:00Z",
+            "filing_date": record.get("filing_date", "2024-01-01"),
+        })
+    return JSONResponse(content={"records": transformed})
+
+
+@app.post("/ingest")
+async def ingest(request: Request):
+    data = await request.json()
+    document = data.get('document', {})
+
+    return JSONResponse(content={
+        "document_id": "doc_123",
+        "status": "ingested",
+        "chunks": 5,
+    })
 
 
 if __name__ == "__main__":
-    from http.server import HTTPServer
+    import uvicorn
     port = int(os.environ.get("PORT", 8001))
-    server = HTTPServer(("", port), DataIngestionHandler)
-    print(f"Data Ingestion running on port {port}")
-    server.serve_forever()
+    uvicorn.run(app, host="0.0.0.0", port=port)
