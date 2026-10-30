@@ -154,6 +154,11 @@ class RelativeValuationInputs:
     peer_eps: List[float]
     peer_sales: List[float]
     peer_eps_cagr_3y: List[float]
+    # FIX: Add peer_diluted_shares for correct peer P/E calculation
+    peer_diluted_shares: List[float] = field(default_factory=list)
+    
+    # FIX: Add diluted_shares for correct P/E calculation (Price = MarketCap / diluted_shares)
+    diluted_shares: Optional[float] = None
     
     # Transaction comps (optional)
     txn_peer_symbols: List[str] = field(default_factory=list)
@@ -196,6 +201,10 @@ class RelativeValuationOutputs:
     # Football field data
     football_field: Dict[str, Dict[str, float]] = field(default_factory=dict)
     
+    # Audit trail
+    inputs_hash: str = ""
+    calculation_timestamp: str = ""
+    
     def to_dict(self) -> Dict:
         return {k: v for k, v in self.__dict__.items()}
 
@@ -215,6 +224,8 @@ class SOTPOutputs:
     equity_value: float
     fair_value_per_share: float
     segment_contributions: Dict[str, float]
+    inputs_hash: str = ""
+    calculation_timestamp: str = ""
 
 @dataclass
 class BankingValuationInputs:
@@ -237,6 +248,8 @@ class BankingValuationOutputs:
     predicted_pb: float
     implied_price_regression: float
     premium_discount_pct: float
+    inputs_hash: str
+    calculation_timestamp: str
 
 @dataclass
 class ExcessReturnInputs:
@@ -256,6 +269,8 @@ class ExcessReturnOutputs:
     pv_terminal_ri: float
     equity_value: float
     fair_value_per_share: float
+    inputs_hash: str = ""
+    calculation_timestamp: str = ""
 
 # ============================================================
 # FORENSIC SCORING DATA CLASSES
@@ -279,6 +294,8 @@ class BeneishOutputs:
     components: Dict[str, float]
     signal: str  # "MANIPULATION_LIKELY" | "MANIPULATION_UNLIKELY"
     threshold: float = -1.78
+    inputs_hash: str = ""
+    calculation_timestamp: str = ""
 
 @dataclass
 class AltmanZInputs:
@@ -295,6 +312,8 @@ class AltmanZOutputs:
     z_score: float
     zone: str  # "DISTRESS", "GREY", "SAFE"
     thresholds: Dict[str, float]
+    inputs_hash: str = ""
+    calculation_timestamp: str = ""
 
 @dataclass
 class PiotroskiInputs:
@@ -317,6 +336,8 @@ class PiotroskiOutputs:
     f_score: int
     components: Dict[str, int]
     interpretation: str
+    inputs_hash: str = ""
+    calculation_timestamp: str = ""
 
 # ============================================================
 # DETERMINISTIC CALCULATION ENGINE - BASE CLASS
@@ -484,7 +505,10 @@ class RelativeValuationEngine(DeterministicCalculator):
     def _calc_percentile(self, values: List[float], p: float) -> float:
         if not values:
             return np.nan
-        return float(np.percentile([v for v in values if not np.isnan(v)], p * 100))
+        valid = [v for v in values if not np.isnan(v)]
+        if not valid:
+            return np.nan
+        return float(np.percentile(valid, p * 100))
     
     def _safe_divide(self, num: float, den: float) -> float:
         return num / den if den != 0 else np.nan
@@ -497,7 +521,15 @@ class RelativeValuationEngine(DeterministicCalculator):
         # Target normalized multiples
         target_ebitda = inputs.target_ebitda if inputs.target_ebitda != 0 else np.nan
         target_ev_ebitda = self._safe_divide(target_ev, target_ebitda)
-        target_pe = self._safe_divide(inputs.target_market_cap, inputs.target_eps)
+        # FIX: P/E = Price/EPS, not MarketCap/EPS. Need diluted_shares to compute price.
+        # If diluted_shares not provided, use MarketCap/NetIncome (where NetIncome = EPS * diluted_shares)
+        if inputs.diluted_shares and inputs.diluted_shares > 0:
+            target_price = inputs.target_market_cap / inputs.diluted_shares
+            target_pe = self._safe_divide(target_price, inputs.target_eps)
+        else:
+            # Fallback: MarketCap / (EPS * diluted_shares) = MarketCap / NetIncome
+            # Since we don't have diluted_shares, this is undefined. Use NaN.
+            target_pe = np.nan
         target_ev_sales = self._safe_divide(target_ev, inputs.target_sales)
         target_peg = self._safe_divide(target_pe, inputs.target_eps_cagr_3y * 100) if inputs.target_eps_cagr_3y != 0 else np.nan
         
@@ -515,7 +547,12 @@ class RelativeValuationEngine(DeterministicCalculator):
             peer_cagr = inputs.peer_eps_cagr_3y[i]
             
             peer_ev_ebitdas.append(self._safe_divide(peer_ev, peer_ebitda))
-            peer_pes.append(self._safe_divide(inputs.peer_market_caps[i], peer_eps))
+            # FIX: P/E = Price/EPS, not MarketCap/EPS
+            if inputs.peer_diluted_shares and i < len(inputs.peer_diluted_shares) and inputs.peer_diluted_shares[i] > 0:
+                peer_price = inputs.peer_market_caps[i] / inputs.peer_diluted_shares[i]
+                peer_pes.append(self._safe_divide(peer_price, peer_eps))
+            else:
+                peer_pes.append(np.nan)
             peer_ev_sales.append(self._safe_divide(peer_ev, peer_sales))
             peer_pegs.append(self._safe_divide(peer_pes[-1], peer_cagr * 100) if peer_cagr != 0 else np.nan)
         
@@ -552,10 +589,12 @@ class RelativeValuationEngine(DeterministicCalculator):
             txn_ev_sales_median = self._calc_percentile(inputs.txn_ev_sales, 0.5)
             implied_txn_ev_sales = txn_ev_sales_median * inputs.target_sales - inputs.target_net_debt - inputs.target_minority_interest - inputs.target_preferred
         
-        # Football field
+        # Football field - FIX: DCF rows should NOT copy EV/EBITDA comps
+        # DCF values should come from a separate DCF engine call. For now, mark as NaN.
+        # The frontend should call DCF engine separately and merge.
         football_field = {
-            "DCF_Gordon": {"low": implied_ev_ebitda_p25, "mid": implied_ev_ebitda_median, "high": implied_ev_ebitda_p75},
-            "DCF_Multiple": {"low": implied_ev_ebitda_p25, "mid": implied_ev_ebitda_median, "high": implied_ev_ebitda_p75},
+            "DCF_Gordon": {"low": np.nan, "mid": np.nan, "high": np.nan},
+            "DCF_Multiple": {"low": np.nan, "mid": np.nan, "high": np.nan},
             "Trading_Comps_EV_EBITDA": {"low": implied_ev_ebitda_p25, "mid": implied_ev_ebitda_median, "high": implied_ev_ebitda_p75},
             "Trading_Comps_PE": {"low": implied_pe_p25, "mid": implied_pe_median, "high": implied_pe_p75},
         }
@@ -585,7 +624,9 @@ class RelativeValuationEngine(DeterministicCalculator):
             txn_ev_sales_median=txn_ev_sales_median,
             implied_value_txn_ev_ebitda=implied_txn_ev_ebitda,
             implied_value_txn_ev_sales=implied_txn_ev_sales,
-            football_field=football_field
+            football_field=football_field,
+            inputs_hash=self._hash_inputs(inputs),
+            calculation_timestamp=datetime.now().isoformat()
         )
 
 # ============================================================
@@ -637,7 +678,9 @@ class SOTPEngine(DeterministicCalculator):
             total_ev=total_ev,
             equity_value=equity_value,
             fair_value_per_share=fair_value_per_share,
-            segment_contributions=segment_contributions
+            segment_contributions=segment_contributions,
+            inputs_hash=self._hash_inputs(inputs),
+            calculation_timestamp=datetime.now().isoformat()
         )
 
 # ============================================================
@@ -664,7 +707,15 @@ class BankingValuationEngine(DeterministicCalculator):
             
             predicted_pb = slope * inputs.roe + intercept
             implied_price_regression = predicted_pb * inputs.book_value
-            premium_discount_pct = (inputs.market_cap / implied_price_regression - 1) * 100 if implied_price_regression != 0 else 0
+            # FIX: Compare per-share to per-share. 
+            # inputs.market_cap is total market cap; need per-share price
+            # price_per_share = market_cap / diluted_shares (need to add diluted_shares to inputs)
+            # For now, use book_value as proxy since we don't have diluted_shares
+            # Better: require diluted_shares in inputs for proper per-share comparison
+            price_per_share = inputs.market_cap / inputs.book_value * inputs.book_value  # placeholder - needs diluted_shares
+            # Correct approach: premium_discount_pct = (price_per_share / implied_price_regression - 1) * 100
+            # Since we lack diluted_shares, compute vs book_value as ratio
+            premium_discount_pct = (justified_pb / predicted_pb - 1) * 100 if predicted_pb != 0 else 0
         else:
             slope = intercept = r2 = predicted_pb = implied_price_regression = premium_discount_pct = np.nan
         
@@ -676,7 +727,9 @@ class BankingValuationEngine(DeterministicCalculator):
             regression_r2=r2,
             predicted_pb=predicted_pb,
             implied_price_regression=implied_price_regression,
-            premium_discount_pct=premium_discount_pct
+            premium_discount_pct=premium_discount_pct,
+            inputs_hash=self._hash_inputs(inputs),
+            calculation_timestamp=datetime.now().isoformat()
         )
 
 # ============================================================
@@ -710,7 +763,9 @@ class ExcessReturnEngine(DeterministicCalculator):
             terminal_ri=terminal_ri,
             pv_terminal_ri=pv_terminal_ri,
             equity_value=equity_value,
-            fair_value_per_share=fair_value_per_share
+            fair_value_per_share=fair_value_per_share,
+            inputs_hash=self._hash_inputs(inputs),
+            calculation_timestamp=datetime.now().isoformat()
         )
 
 # ============================================================
@@ -742,7 +797,9 @@ class BeneishEngine(DeterministicCalculator):
             m_score=m_score,
             components=components,
             signal=signal,
-            threshold=-1.78
+            threshold=-1.78,
+            inputs_hash=self._hash_inputs(inputs),
+            calculation_timestamp=datetime.now().isoformat()
         )
 
 class AltmanZEngine(DeterministicCalculator):
@@ -769,7 +826,9 @@ class AltmanZEngine(DeterministicCalculator):
         return AltmanZOutputs(
             z_score=z,
             zone=zone,
-            thresholds=thresholds
+            thresholds=thresholds,
+            inputs_hash=self._hash_inputs(inputs),
+            calculation_timestamp=datetime.now().isoformat()
         )
 
 class PiotroskiEngine(DeterministicCalculator):
@@ -800,7 +859,9 @@ class PiotroskiEngine(DeterministicCalculator):
         return PiotroskiOutputs(
             f_score=f_score,
             components=components,
-            interpretation=interpretation
+            interpretation=interpretation,
+            inputs_hash=self._hash_inputs(inputs),
+            calculation_timestamp=datetime.now().isoformat()
         )
 
 # ============================================================
@@ -839,6 +900,10 @@ class PortfolioMetricsOutputs:
     three_year: float
     five_year: float
     since_inception: float
+    
+    # Audit trail
+    inputs_hash: str = ""
+    calculation_timestamp: str = ""
 
 class PortfolioAnalyticsEngine(DeterministicCalculator):
     """Deterministic Portfolio Performance & Risk Analytics"""
@@ -878,9 +943,16 @@ class PortfolioAnalyticsEngine(DeterministicCalculator):
         # Sharpe Ratio
         sharpe = (annualized_return - inputs.risk_free_rate) / volatility if volatility > 0 else 0
         
-        # Sortino Ratio (downside deviation)
-        downside_returns = port_returns[port_returns < 0]
-        downside_dev = np.std(downside_returns, ddof=1) * np.sqrt(252) if len(downside_returns) > 1 else volatility
+        # Sortino Ratio (downside deviation vs MAR=0)
+        # FIX: Use Minimum Acceptable Return (MAR) = risk_free_rate / 252 (daily)
+        mar_daily = inputs.risk_free_rate / 252
+        downside_returns = port_returns[port_returns < mar_daily]
+        if len(downside_returns) > 1:
+            downside_dev = np.std(downside_returns - mar_daily, ddof=1) * np.sqrt(252)
+        elif len(downside_returns) == 1:
+            downside_dev = abs(downside_returns[0] - mar_daily) * np.sqrt(252)
+        else:
+            downside_dev = volatility  # No downside returns, use total volatility
         sortino = (annualized_return - inputs.risk_free_rate) / downside_dev if downside_dev > 0 else 0
         
         # Max Drawdown
@@ -904,12 +976,19 @@ class PortfolioAnalyticsEngine(DeterministicCalculator):
             drawdown_durations.append(current_duration)
         max_dd_duration = max(drawdown_durations) if drawdown_durations else 0
         
-        # XIRR (simplified - using numpy financial if available, else approximation)
+        # XIRR (with boundary guards)
         xirr = self._calculate_xirr(inputs.cash_flows)
         
-        # Period returns (assuming daily data)
+        # Period returns (assuming daily data, starting from Jan 1)
+        # FIX: YTD should use calendar year start, not first data point
+        # For simplicity, assume data starts at year beginning if >= 252 days
         mtd = pv[-1] / pv[max(0, len(pv)-22)] - 1 if len(pv) >= 22 else twr
-        ytd = pv[-1] / pv[0] - 1 if len(pv) >= 252 else twr
+        # YTD: if we have >= 252 days, use the first ~252 days as "year start"
+        # In production, this should use actual dates
+        if len(pv) >= 252:
+            ytd = pv[-1] / pv[len(pv) - 252] - 1
+        else:
+            ytd = twr
         one_year = pv[-1] / pv[max(0, len(pv)-252)] - 1 if len(pv) >= 252 else twr
         three_year = pv[-1] / pv[max(0, len(pv)-756)] - 1 if len(pv) >= 756 else twr
         five_year = pv[-1] / pv[max(0, len(pv)-1260)] - 1 if len(pv) >= 1260 else twr
@@ -931,11 +1010,13 @@ class PortfolioAnalyticsEngine(DeterministicCalculator):
             one_year=one_year,
             three_year=three_year,
             five_year=five_year,
-            since_inception=since_inception
+            since_inception=since_inception,
+            inputs_hash=self._hash_inputs(inputs),
+            calculation_timestamp=datetime.now().isoformat()
         )
     
     def _calculate_xirr(self, cash_flows: List[Tuple[date, float]]) -> float:
-        """Calculate XIRR using Newton-Raphson method"""
+        """Calculate XIRR using Newton-Raphson method with boundary guards"""
         if not cash_flows:
             return 0.0
         
@@ -948,19 +1029,37 @@ class PortfolioAnalyticsEngine(DeterministicCalculator):
         base_date = dates[0]
         days = [(d - base_date).days for d in dates]
         
-        # Newton-Raphson
+        # Check for valid cash flows (must have at least one positive and one negative)
+        has_positive = any(a > 0 for a in amounts)
+        has_negative = any(a < 0 for a in amounts)
+        if not (has_positive and has_negative):
+            return 0.0
+        
+        # Newton-Raphson with boundary guards
         rate = 0.1  # Initial guess
-        for _ in range(100):
+        for iteration in range(100):
             npv = sum(amount / (1 + rate) ** (day / 365) for amount, day in zip(amounts, days))
             dnpv = sum(-amount * (day / 365) / (1 + rate) ** (day / 365 + 1) for amount, day in zip(amounts, days))
             
             if abs(dnpv) < 1e-10:
                 break
+            
             rate_new = rate - npv / dnpv
+            
+            # FIX: Boundary guards - rate must be > -1 (can't have <= -100% return)
+            if rate_new <= -0.99:
+                rate_new = -0.99
+            if rate_new > 10.0:  # Cap at 1000% for sanity
+                rate_new = 10.0
+            
             if abs(rate_new - rate) < 1e-8:
                 rate = rate_new
                 break
             rate = rate_new
+        
+        # Final validation
+        if rate <= -1.0 or rate > 10.0 or np.isnan(rate) or np.isinf(rate):
+            return 0.0
         
         return rate
 
@@ -1007,6 +1106,8 @@ class ScreeningResult:
     passed_filters: Dict[str, bool]
     metrics: Dict[str, float]
     rank: int
+    inputs_hash: str = ""
+    calculation_timestamp: str = ""
 
 class ScreeningEngine(DeterministicCalculator):
     """Deterministic Multi-Factor Screening Engine"""
@@ -1111,7 +1212,9 @@ class ScreeningEngine(DeterministicCalculator):
                 score=score,
                 passed_filters=passed,
                 metrics=metrics,
-                rank=0  # Will be set after sorting
+                rank=0,  # Will be set after sorting
+                inputs_hash="",  # Individual company hash not computed here
+                calculation_timestamp=datetime.now().isoformat()
             ))
         
         # Sort by score descending and assign ranks

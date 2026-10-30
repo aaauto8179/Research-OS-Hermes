@@ -1,13 +1,10 @@
 'use client';
 
 import { useState, useCallback, useMemo } from 'react';
-import { GridLayout, Responsive } from 'react-grid-layout';
-import WidthProvider from 'react-grid-layout';
+import { ResponsiveGridLayout } from 'react-grid-layout';
 import { useWorkspaceStore, WidgetConfig, WidgetType, DEFAULT_WIDGET_TYPES } from '@/lib/workspace-store';
 import { Plus, Trash2, GripVertical, Settings, Maximize2, Minimize2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-const ResponsiveGridLayout = WidthProvider(Responsive);
 
 interface WidgetRendererProps {
   widget: WidgetConfig;
@@ -158,23 +155,27 @@ export function DashboardCanvas({ context, contextKey, className }: DashboardCan
     }))
   , [widgets]);
   
-  const handleLayoutChange = useCallback((newLayout: any[]) => {
-    if (context === 'industry') {
-      saveLayout(contextKey, newLayout);
-    }
-    
-    // Update widget positions in store
-    newLayout.forEach(item => {
-      const widget = widgets.find(w => w.id === item.i);
-      if (widget && (widget.gridProps.x !== item.x || widget.gridProps.y !== item.y)) {
-        moveWidget(context, contextKey, item.i, { x: item.x, y: item.y });
+  const handleLayoutChange = useCallback((newLayout: any) => {
+      if (context === 'industry') {
+        saveLayout(context, contextKey, newLayout);
       }
-    });
-  }, [context, contextKey, widgets, saveLayout, moveWidget]);
-  
-  const handleResize = useCallback((layout: any[], oldItem: any, newItem: any) => {
-    resizeWidget(context, contextKey, newItem.i, { w: newItem.w, h: newItem.h });
-  }, [context, contextKey, resizeWidget]);
+    
+      // Update widget positions in store
+      if (Array.isArray(newLayout)) {
+        newLayout.forEach(item => {
+          const widget = widgets.find(w => w.id === item.i);
+          if (widget && (widget.gridProps.x !== item.x || widget.gridProps.y !== item.y)) {
+            moveWidget(context, contextKey, item.i, { x: item.x, y: item.y });
+          }
+        });
+      }
+    }, [context, contextKey, widgets, saveLayout, moveWidget]);
+
+    const handleResize = useCallback((layout: any, oldItem: any, newItem: any) => {
+      if (newItem) {
+        resizeWidget(context, contextKey, newItem.i, { w: newItem.w, h: newItem.h });
+      }
+    }, [context, contextKey, resizeWidget]);
   
   const handleAddWidget = useCallback((type: string) => {
     const widgetType = DEFAULT_WIDGET_TYPES.find(w => w.type === type);
@@ -244,17 +245,19 @@ export function DashboardCanvas({ context, contextKey, className }: DashboardCan
       </div>
       
       <ResponsiveGridLayout
-        className="layout flex-1"
-        layouts={{ lg: rglLayout }}
-        breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
-        cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
-        rowHeight={60}
-        compactType="vertical"
-        onLayoutChange={handleLayoutChange}
-        onResizeStop={handleResize}
-        draggableHandle=".widget-header"
-        preventCollision={false}
-        useCSSTransforms={true}
+        {...{
+          className: "layout flex-1",
+          layouts: { lg: rglLayout },
+          breakpoints: { lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 },
+          cols: { lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 },
+          rowHeight: 60,
+          compactType: "vertical",
+          onLayoutChange: handleLayoutChange,
+          onResizeStop: handleResize,
+          draggableHandle: ".widget-header",
+          preventCollision: false,
+          useCSSTransforms: true,
+        } as any}
       >
         {widgets.map(widget => (
           <div key={widget.id} data-grid={rglLayout.find(l => l.i === widget.id)}>

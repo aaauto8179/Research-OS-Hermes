@@ -26,7 +26,7 @@ import {
   Star, Bell, Minus, LineChart, Activity, Gauge,
   User, Users, Globe, Link, BarChart3, PieChart as PieChartIcon,
   ArrowLeft, Shield, Scale, Brain, Heart, AlertCircle,
-  Clock, Play, Pause, Stop, Square, Timer, Trash2, Edit2
+  Clock, Play, Pause, Timer, Trash2, Edit2
 } from "lucide-react";
 import { MOCK_COMPANIES } from "@/lib/mock-data";
 
@@ -143,7 +143,7 @@ export default function TasksPage() {
             <p className="text-2xl font-bold font-mono" id="timer-display">00:00:00</p>
           </div>
           <Button variant="secondary" onClick={stopTimer} className="h-10 px-4">
-            <Square className="mr-2 h-4 w-4" /> Stop
+            Stop
           </Button>
         </div>
       )}
@@ -154,8 +154,8 @@ export default function TasksPage() {
         <MetricCard label="In Progress" value={tasks.filter(t => t.status === "IN_PROGRESS").length} icon={Play} />
         <MetricCard label="Completed" value={tasks.filter(t => t.status === "DONE").length} icon={CheckCircle} />
         <MetricCard label="Blocked" value={tasks.filter(t => t.status === "BLOCKED").length} icon={AlertCircle} />
-        <MetricCard label="Est. Hours" value={tasks.reduce((s,t) => s + (t.estimated_hours || 0), 0)}h icon={Clock} />
-        <MetricCard label="Actual Hours" value={tasks.reduce((s,t) => s + (t.actual_hours || 0), 0).toFixed(1)}h icon={Timer} />
+        <MetricCard label="Est. Hours" value={`${tasks.reduce((s,t) => s + (t.estimated_hours || 0), 0)}h`} icon={Clock} />
+        <MetricCard label="Actual Hours" value={`${tasks.reduce((s,t) => s + (t.actual_hours || 0), 0).toFixed(1)}h`} icon={Timer} />
       </div>
 
       {/* Filters */}
@@ -481,7 +481,7 @@ function TaskCard({ task, stageColor, onDragStart, onClick }: { task: any; stage
         <span className="font-medium text-sm truncate flex-1">{task.title}</span>
         <div className="flex items-center gap-1">
           <Badge variant={task.priority === 1 ? "destructive" : task.priority === 2 ? "secondary" : "outline"} className="text-xs">P{task.priority}</Badge>
-          {isOverdue && <AlertCircle className="h-3 w-3 text-red-600" title="Overdue" />}
+          {isOverdue && <AlertCircle className="h-3 w-3 text-red-600" />}
         </div>
       </div>
       <p className="text-xs text-muted-foreground line-clamp-2 mb-2">{task.description}</p>
@@ -493,7 +493,7 @@ function TaskCard({ task, stageColor, onDragStart, onClick }: { task: any; stage
       </div>
       {task.tags.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-1">
-          {task.tags.slice(0, 3).map(tag => (
+          {task.tags.slice(0, 3).map((tag: string) => (
             <Badge key={tag} variant="outline" className="text-xs">{tag}</Badge>
           ))}
           {task.tags.length > 3 && <Badge variant="outline" className="text-xs">+{task.tags.length - 3} more</Badge>}
@@ -503,7 +503,7 @@ function TaskCard({ task, stageColor, onDragStart, onClick }: { task: any; stage
   );
 }
 
-function MetricCard({ label, value, change, trend, icon: Icon }: { label: string; value: string; change?: string; trend?: "up" | "down"; icon?: any }) {
+function MetricCard({ label, value, change, trend, icon: Icon }: { label: string; value: string | number; change?: string; trend?: "up" | "down"; icon?: any }) {
   return (
     <Card>
       <CardContent className="p-4">

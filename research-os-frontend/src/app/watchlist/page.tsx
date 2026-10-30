@@ -331,7 +331,7 @@ export default function WatchlistPage() {
   );
 }
 
-function MetricCard({ label, value, change, trend, icon: Icon }: { label: string; value: string; change?: string; trend?: "up" | "down"; icon?: any }) {
+function MetricCard({ label, value, change, trend, icon: Icon }: { label: string; value: string | number; change?: string; trend?: "up" | "down"; icon?: any }) {
   return (
     <Card>
       <CardContent className="p-4">

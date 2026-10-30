@@ -2,12 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { 
-  Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableCaption 
+  Table, TableHeader, TableBody, TableRow, TableHead, TableCell 
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -99,16 +98,16 @@ export default function DocumentsPage() {
       }
       
       const newDoc = {
-        id: String(Date.now() + i),
-        company_symbol: "UNKNOWN",
-        title: file.name.replace(/\.[^/.]+$/, ""),
-        doc_type: "OTHER" as DocumentType,
-        source: "MANUAL_UPLOAD",
-        date: new Date().toISOString().split("T")[0],
-        pages: 0,
-        status: "PENDING" as const,
-        file_size: `${(file.size / 1024 / 1024).toFixed(1)} MB`,
-      };
+              id: String(Date.now() + i),
+              company_symbol: "UNKNOWN",
+              title: file.name.replace(/\.[^/.]+$/, ""),
+              doc_type: "OTHER" as DocumentType,
+              source: "MANUAL_UPLOAD",
+              date: new Date().toISOString().split("T")[0],
+              pages: 0,
+              status: "PENDING" as "PENDING" | "PARSING" | "PARSED" | "FAILED",
+              file_size: `${(file.size / 1024 / 1024).toFixed(1)} MB`,
+            } as any;
       setDocuments(prev => [newDoc, ...prev]);
     }
     setUploading(false);

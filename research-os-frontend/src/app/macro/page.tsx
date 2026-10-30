@@ -187,10 +187,10 @@ export default function MacroPage() {
 function MacroCard({ indicator }: { indicator: any }) {
   const trendColors = { up: "text-green-600", down: "text-red-600", neutral: "text-gray-600" };
   const trendIcons = { up: TrendingUp, down: TrendingDown, neutral: Minus };
-  const TrendIcon = trendIcons[indicator.trend] || Minus;
+  const TrendIcon = trendIcons[indicator.trend as keyof typeof trendIcons] || Minus;
 
   return (
-    <Card className="border-l-4" style={{ borderLeftColor: indicator.trend === "up" ? "green" : indicator.trend === "down" ? "red" : "gray" }} className="min-w-[280px] flex-shrink-0">
+    <Card className="border-l-4 min-w-[280px] flex-shrink-0" style={{ borderLeftColor: indicator.trend === "up" ? "green" : indicator.trend === "down" ? "red" : "gray" }}>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <h4 className="font-medium text-sm">{indicator.name}</h4>
@@ -203,7 +203,7 @@ function MacroCard({ indicator }: { indicator: any }) {
           <span className="text-lg text-muted-foreground">{indicator.unit}</span>
         </div>
         <div className="flex items-center justify-between">
-          <span className={`text-sm font-medium ${trendColors[indicator.trend]}`}>
+          <span className={`text-sm font-medium ${trendColors[indicator.trend as keyof typeof trendColors]}`}>
             <TrendIcon className="inline h-4 w-4 mr-1" />
             {indicator.trend === "up" ? "Rising" : indicator.trend === "down" ? "Falling" : "Stable"}
           </span>
@@ -240,7 +240,7 @@ function Sparkline({ data, color }: { data: number[]; color: string }) {
 function MarketMetricCard({ metric }: { metric: any }) {
   const trendColors = { up: "text-green-600", down: "text-red-600", neutral: "text-gray-600" };
   const trendIcons = { up: TrendingUp, down: TrendingDown, neutral: Minus };
-  const TrendIcon = trendIcons[metric.trend] || Minus;
+  const TrendIcon = trendIcons[metric.trend as keyof typeof trendIcons] || Minus;
 
   return (
     <Card className="border-l-4" style={{ borderLeftColor: metric.trend === "up" ? "green" : metric.trend === "down" ? "red" : "gray" }}>

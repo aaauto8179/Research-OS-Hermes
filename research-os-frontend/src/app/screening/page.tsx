@@ -16,11 +16,7 @@ import {
 import { CompanySnapshot, ScreeningCriteria, ScreeningResult } from "@/lib/types";
 import { MOCK_COMPANIES, DEFAULT_SCREENING_CRITERIA } from "@/lib/mock-data";
 
-interface ScreeningPageProps {
-  initialCompanies?: CompanySnapshot[];
-}
-
-export default function ScreeningPage({ initialCompanies = [] }: ScreeningPageProps) {
+export default function ScreeningPage() {
   const [companies, setCompanies] = useState<CompanySnapshot[]>([]);
   const [filteredCompanies, setFilteredCompanies] = useState<CompanySnapshot[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -33,13 +29,8 @@ export default function ScreeningPage({ initialCompanies = [] }: ScreeningPagePr
 
   // Load mock data on mount
   useEffect(() => {
-    if (initialCompanies.length > 0) {
-      setCompanies(initialCompanies);
-    } else {
-      // Use mock sandbox data
-      setCompanies(MOCK_COMPANIES);
-    }
-  }, [initialCompanies]);
+    setCompanies(MOCK_COMPANIES);
+  }, []);
 
   // Apply filters and sorting
   useEffect(() => {

@@ -261,14 +261,16 @@ export const DEFAULT_WIDGET_TYPES: WidgetType[] = [
 
 // Default company tab templates
 export const DEFAULT_COMPANY_TABS: Omit<TabConfig, 'id' | 'order'>[] = [
-  { label: 'Financials', widgetIds: [], isCustom: false },
-  { label: 'Valuation', widgetIds: [], isCustom: false },
-  { label: 'Risk', widgetIds: [], isCustom: false },
-  { label: 'Ownership', widgetIds: [], isCustom: false },
-  { label: 'Catalysts', widgetIds: [], isCustom: false },
-  { label: 'Documents', widgetIds: [], isCustom: false },
-  { label: 'Technicals', widgetIds: [], isCustom: false },
-  { label: 'Checklist', widgetIds: [], isCustom: false },
+  { label: 'Overview & Decision', widgetIds: [], isCustom: false },
+  { label: 'Story & Moats', widgetIds: [], isCustom: false },
+  { label: 'Management & Concall', widgetIds: [], isCustom: false },
+  { label: 'Governance & Forensics', widgetIds: [], isCustom: false },
+  { label: 'Financial Statements', widgetIds: [], isCustom: false },
+  { label: 'Valuation Suite', widgetIds: [], isCustom: false },
+  { label: 'Risk Scoring', widgetIds: [], isCustom: false },
+  { label: 'SME Forensics', widgetIds: [], isCustom: false },
+  { label: 'Working Capital & Concentration', widgetIds: [], isCustom: false },
+  { label: 'Downsides & Exit Triggers', widgetIds: [], isCustom: false },
 ];
 
 // Default industry dashboard layout

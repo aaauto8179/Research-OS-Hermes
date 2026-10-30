@@ -1,13 +1,12 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import { Search, Building2, DollarSign, TrendingUp, BarChart2, TrendingUp as TrendingUpIcon, LayoutDashboard, ArrowLeft, Link, BarChart3, ArrowRight } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Search, Building2, DollarSign, TrendingUp, BarChart2, TrendingUp as TrendingUpIcon, LayoutDashboard, ArrowLeft, BarChart3 } from "lucide-react";
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableCaption
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";

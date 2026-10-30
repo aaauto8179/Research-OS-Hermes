@@ -21,6 +21,8 @@ export const MOCK_COMPANIES: CompanySnapshot[] = [
     industry: 'Refining & Marketing',
     market_cap_category: 'LARGE',
     last_updated: new Date().toISOString(),
+    change: 1.2,
+    dist_from_52w_high: 0.15,
   },
   {
     symbol: 'TCS',
@@ -42,6 +44,8 @@ export const MOCK_COMPANIES: CompanySnapshot[] = [
     industry: 'Software Services',
     market_cap_category: 'LARGE',
     last_updated: new Date().toISOString(),
+    change: -0.5,
+    dist_from_52w_high: 0.08,
   },
   {
     symbol: 'HDFCBANK',
@@ -63,6 +67,8 @@ export const MOCK_COMPANIES: CompanySnapshot[] = [
     industry: 'Private Sector Bank',
     market_cap_category: 'LARGE',
     last_updated: new Date().toISOString(),
+    change: 0.8,
+    dist_from_52w_high: 0.05,
   },
   {
     symbol: 'INFY',
@@ -84,6 +90,8 @@ export const MOCK_COMPANIES: CompanySnapshot[] = [
     industry: 'Software Services',
     market_cap_category: 'LARGE',
     last_updated: new Date().toISOString(),
+    change: 0.3,
+    dist_from_52w_high: 0.12,
   },
   {
     symbol: 'ICICIBANK',
@@ -105,6 +113,8 @@ export const MOCK_COMPANIES: CompanySnapshot[] = [
     industry: 'Private Sector Bank',
     market_cap_category: 'LARGE',
     last_updated: new Date().toISOString(),
+    change: -0.2,
+    dist_from_52w_high: 0.10,
   },
   {
     symbol: 'BAJFINANCE',
@@ -126,6 +136,8 @@ export const MOCK_COMPANIES: CompanySnapshot[] = [
     industry: 'NBFC',
     market_cap_category: 'LARGE',
     last_updated: new Date().toISOString(),
+    change: 2.1,
+    dist_from_52w_high: 0.20,
   },
   {
     symbol: 'DMART',
@@ -147,6 +159,8 @@ export const MOCK_COMPANIES: CompanySnapshot[] = [
     industry: 'Retail',
     market_cap_category: 'MID',
     last_updated: new Date().toISOString(),
+    change: -1.5,
+    dist_from_52w_high: 0.25,
   },
   {
     symbol: 'TRENT',
@@ -168,6 +182,8 @@ export const MOCK_COMPANIES: CompanySnapshot[] = [
     industry: 'Retail',
     market_cap_category: 'MID',
     last_updated: new Date().toISOString(),
+    change: 3.2,
+    dist_from_52w_high: 0.05,
   },
   {
     symbol: 'PERSISTENT',
@@ -189,6 +205,8 @@ export const MOCK_COMPANIES: CompanySnapshot[] = [
     industry: 'Software Services',
     market_cap_category: 'MID',
     last_updated: new Date().toISOString(),
+    change: 1.8,
+    dist_from_52w_high: 0.08,
   },
   {
     symbol: 'COFORGE',
@@ -210,6 +228,8 @@ export const MOCK_COMPANIES: CompanySnapshot[] = [
     industry: 'Software Services',
     market_cap_category: 'MID',
     last_updated: new Date().toISOString(),
+    change: -0.7,
+    dist_from_52w_high: 0.15,
   },
 ];
 

@@ -23,10 +23,6 @@ import {
   ExcessReturnInputs, ExcessReturnOutputs
 } from "@/lib/types";
 
-interface ValuationPageProps {
-  companySymbol?: string;
-}
-
 const DEFAULT_DCF_INPUTS: DCFInputs = {
   revenue: 750000,
   ebit: 135000,
@@ -78,7 +74,8 @@ async function callScreeningApi(inputs: any): Promise<any> {
   return res.json();
 }
 
-export default function ValuationPage({ companySymbol = "RELIANCE" }: ValuationPageProps) {
+export default function ValuationPage() {
+  const companySymbol = "RELIANCE";
   const [activeTab, setActiveTab] = useState<string>("dcf");
   const [dcfInputs, setDcfInputs] = useState<DCFInputs>(DEFAULT_DCF_INPUTS);
   const [dcfOutputs, setDcfOutputs] = useState<DCFOutputs | null>(null);

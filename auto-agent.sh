@@ -5,7 +5,7 @@
 set -euo pipefail
 
 # Configuration
-RESEARCH_OS_ROOT="/c/Users/aaaut/research-os"
+RESEARCH_OS_ROOT="${RESEARCH_OS_ROOT:-$(cd "$(dirname "$0")" && pwd)}"
 LOG_DIR="$RESEARCH_OS_ROOT/logs/auto-agent"
 mkdir -p "$LOG_DIR"
 

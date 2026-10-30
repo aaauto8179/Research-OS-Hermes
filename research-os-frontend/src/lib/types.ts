@@ -352,6 +352,9 @@ export interface CompanySnapshot {
   industry?: string
   market_cap_category?: 'LARGE' | 'MID' | 'SMALL' | 'MICRO'
   last_updated: string
+  // Additional fields for watchlist
+  change?: number
+  dist_from_52w_high?: number
 }
 
 export interface ScreeningCriteria {

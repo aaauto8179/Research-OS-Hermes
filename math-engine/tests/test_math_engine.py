@@ -206,13 +206,15 @@ class TestRelativeValuationEngine:
             target_eps=25.0,
             target_sales=40000.0,
             target_eps_cagr_3y=0.15,
+            diluted_shares=2000.0,  # Price = 50000/2000 = 25, P/E = 25/25 = 1.0
             peer_symbols=['PEER1', 'PEER2', 'PEER3', 'PEER4', 'PEER5'],
             peer_market_caps=[60000, 45000, 80000, 35000, 55000],
             peer_net_debts=[3000, 2000, 8000, 1000, 4000],
             peer_ebitdas=[9000, 7000, 12000, 5000, 8500],
             peer_eps=[30.0, 20.0, 40.0, 15.0, 28.0],
             peer_sales=[50000, 35000, 90000, 28000, 48000],
-            peer_eps_cagr_3y=[0.12, 0.18, 0.10, 0.20, 0.14]
+            peer_eps_cagr_3y=[0.12, 0.18, 0.10, 0.20, 0.14],
+            peer_diluted_shares=[2000.0, 1500.0, 2500.0, 1000.0, 1800.0]  # Prices: 30, 30, 32, 35, 30.56
         )
         
         engine = RelativeValuationEngine()
@@ -242,6 +244,7 @@ class TestRelativeValuationEngine:
             target_eps=25.0,
             target_sales=40000.0,
             target_eps_cagr_3y=0.15,
+            diluted_shares=2000.0,
             peer_symbols=['PEER1', 'PEER2'],
             peer_market_caps=[60000, 45000],
             peer_net_debts=[3000, 2000],
@@ -249,6 +252,7 @@ class TestRelativeValuationEngine:
             peer_eps=[30.0, 20.0],
             peer_sales=[50000, 35000],
             peer_eps_cagr_3y=[0.12, 0.18],
+            peer_diluted_shares=[2000.0, 1500.0],
             txn_peer_symbols=['TXN1', 'TXN2', 'TXN3'],
             txn_ev_ebitda=[10.5, 11.2, 9.8],
             txn_ev_sales=[2.1, 2.3, 1.9]
@@ -274,13 +278,15 @@ class TestRelativeValuationEngine:
             target_eps=10.0,
             target_sales=8000.0,
             target_eps_cagr_3y=0.10,
+            diluted_shares=1000.0,
             peer_symbols=['P1', 'P2', 'P3'],
             peer_market_caps=[12000, 9000, 11000],
             peer_net_debts=[800, 500, 1200],
             peer_ebitdas=[2500, 1800, 2200],
             peer_eps=[12.0, 8.0, 11.0],
             peer_sales=[10000, 7000, 9000],
-            peer_eps_cagr_3y=[0.12, 0.08, 0.11]
+            peer_eps_cagr_3y=[0.12, 0.08, 0.11],
+            peer_diluted_shares=[1000.0, 800.0, 900.0]
         )
         
         engine = RelativeValuationEngine()

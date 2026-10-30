@@ -27,8 +27,10 @@ export function CompanyTabs({ symbol, onTabChange }: CompanyTabsProps) {
   
   const [activeTabId, setActiveTabId] = useState<string>(() => {
     // Initialize from localStorage or first tab
-    const saved = localStorage.getItem(`company-${symbol}-active-tab`);
-    if (saved) return saved;
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(`company-${symbol}-active-tab`);
+      if (saved) return saved;
+    }
     return tabs[0]?.id || '';
   });
   
