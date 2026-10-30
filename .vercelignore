@@ -1,0 +1,24 @@
+# Ignore build outputs and dependencies
+**/node_modules/**
+**/.next/**
+**/.vercel/**
+**/*.log
+.env*
+!.env.example
+
+# Ignore IDE and OS files
+.idea/**
+.vscode/**
+.DS_Store
+Thumbs.db
+
+# Ignore git files (except .gitignore)
+.git/*
+!.gitignore
+
+# Keep config files
+vercel.json
+package.json
+data-ingestion/**
+math-engine/**
+research-os-frontend/**
