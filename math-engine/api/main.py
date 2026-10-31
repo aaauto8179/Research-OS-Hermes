@@ -22,6 +22,7 @@ from math_engine import (
     PiotroskiEngine, PiotroskiInputs,
     PortfolioAnalyticsEngine, PortfolioMetricsInputs,
 )
+from math_engine.portfolio.corporate_actions import CorporateActionsEngine, CorporateAction
 
 app = FastAPI(title="Research OS Math Engine", version="1.0.0")
 
@@ -129,6 +130,16 @@ async def portfolio(request: Request):
     engine = PortfolioAnalyticsEngine()
     result = engine.calculate(inputs)
     return JSONResponse(content=result.model_dump())
+
+
+@app.post("/corporate-actions")
+async def corporate_actions(request: Request):
+    data = await request.json()
+    engine = CorporateActionsEngine()
+    action = CorporateAction(**data.get("action", {}))
+    holdings = data.get("holdings", [])
+    result = engine.adjust_holdings(holdings, action)
+    return JSONResponse(content={"adjusted_holdings": result})
 
 
 if __name__ == "__main__":

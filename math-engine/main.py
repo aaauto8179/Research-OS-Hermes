@@ -6,25 +6,23 @@ import json
 import os
 import sys
 
-# Vercel deployment: math_engine package is at root level
-# Local development: math_engine package is in src/
-sys.path.insert(0, os.path.dirname(__file__))
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
-
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from math_engine.dcf import DCFEngine, DCFInputs
-from math_engine.screening import ScreeningEngine, ScreeningCriteria
-from math_engine.relative import RelativeValuationEngine, RelativeValuationInputs
-from math_engine.sotp import SOTPEngine, SOTPInputs
-from math_engine.banking import BankingValuationEngine, BankingValuationInputs
-from math_engine.excess_return import ExcessReturnEngine, ExcessReturnInputs
-from math_engine.beneish import BeneishEngine
-from math_engine.altman import AltmanZEngine
-from math_engine.piotroski import PiotroskiEngine
-from math_engine.portfolio import PortfolioAnalyticsEngine
+from math_engine import (
+    DCFEngine, DCFInputs,
+    ScreeningEngine, ScreeningCriteria,
+    RelativeValuationEngine, RelativeValuationInputs,
+    SOTPEngine, SOTPInputs,
+    BankingValuationEngine, BankingValuationInputs,
+    ExcessReturnEngine, ExcessReturnInputs,
+    BeneishEngine, BeneishInputs,
+    AltmanZEngine, AltmanZInputs,
+    PiotroskiEngine, PiotroskiInputs,
+    PortfolioAnalyticsEngine, PortfolioMetricsInputs,
+)
+from math_engine.portfolio.corporate_actions import CorporateActionsEngine, CorporateAction
 
 app = FastAPI(title="Research OS Math Engine", version="1.0.0")
 
@@ -54,11 +52,11 @@ async def dcf(request: Request):
 @app.post("/screening")
 async def screening(request: Request):
     data = await request.json()
-    criteria = ScreeningCriteria(**data)
+    criteria = ScreeningCriteria(**data.get("criteria", {}))
     engine = ScreeningEngine()
-    from math_engine.mock_data import get_mock_companies
-    companies = get_mock_companies()
-    results = engine.screen(companies, criteria)
+    # Use empty universe for now - frontend sends companies
+    universe = data.get("companies", [])
+    results = engine.calculate(universe, criteria)
     return JSONResponse(content={"results": [r.model_dump() for r in results]})
 
 
@@ -101,33 +99,47 @@ async def excess_return(request: Request):
 @app.post("/beneish")
 async def beneish(request: Request):
     data = await request.json()
+    inputs = BeneishInputs(**data)
     engine = BeneishEngine()
-    result = engine.calculate(data)
+    result = engine.calculate(inputs)
     return JSONResponse(content=result.model_dump())
 
 
 @app.post("/altman")
 async def altman(request: Request):
     data = await request.json()
+    inputs = AltmanZInputs(**data)
     engine = AltmanZEngine()
-    result = engine.calculate(data)
+    result = engine.calculate(inputs)
     return JSONResponse(content=result.model_dump())
 
 
 @app.post("/piotroski")
 async def piotroski(request: Request):
     data = await request.json()
+    inputs = PiotroskiInputs(**data)
     engine = PiotroskiEngine()
-    result = engine.calculate(data)
+    result = engine.calculate(inputs)
     return JSONResponse(content=result.model_dump())
 
 
 @app.post("/portfolio")
 async def portfolio(request: Request):
     data = await request.json()
+    inputs = PortfolioMetricsInputs(**data)
     engine = PortfolioAnalyticsEngine()
-    result = engine.analyze(data)
+    result = engine.calculate(inputs)
     return JSONResponse(content=result.model_dump())
+
+
+@app.post("/corporate-actions")
+async def corporate_actions(request: Request):
+    data = await request.json()
+    engine = CorporateActionsEngine()
+    action = CorporateAction(**data.get("action", {}))
+    holdings = data.get("holdings", [])
+    result = engine.adjust_holdings(holdings, action)
+    return JSONResponse(content={"adjusted_holdings": result})
 
 
 if __name__ == "__main__":
