@@ -48,18 +48,6 @@ async def extract(request: Request):
     })
 
 
-@app.post("/classify")
-async def classify(request: Request):
-    data = await request.json()
-    document = data.get('document', {})
-
-    return JSONResponse(content={
-        "doc_type": "ANNUAL_REPORT",
-        "confidence": 0.95,
-        "metadata": {}
-    })
-
-
 @app.post("/pit-transform")
 async def pit_transform(request: Request):
     data = await request.json()

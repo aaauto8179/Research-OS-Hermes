@@ -158,6 +158,14 @@ async def websocket_prices(websocket: WebSocket):
         pass
 
 
+@app.get("/prices")
+async def prices(symbols: str = ""):
+    import random
+    symbol_list = [s.strip() for s in symbols.split(",") if s.strip()]
+    price_data = {s: round(random.uniform(100, 5000), 2) for s in symbol_list}
+    return JSONResponse(content={"prices": price_data})
+
+
 if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get("PORT", 8000))
