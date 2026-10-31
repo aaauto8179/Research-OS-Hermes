@@ -6,7 +6,10 @@ import json
 import os
 import sys
 
-from fastapi import FastAPI, Request
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+
+from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
@@ -54,7 +57,6 @@ async def screening(request: Request):
     data = await request.json()
     criteria = ScreeningCriteria(**data.get("criteria", {}))
     engine = ScreeningEngine()
-    # Use empty universe for now - frontend sends companies
     universe = data.get("companies", [])
     results = engine.calculate(universe, criteria)
     return JSONResponse(content={"results": [r.model_dump() for r in results]})
@@ -140,6 +142,20 @@ async def corporate_actions(request: Request):
     holdings = data.get("holdings", [])
     result = engine.adjust_holdings(holdings, action)
     return JSONResponse(content={"adjusted_holdings": result})
+
+
+@app.websocket("/ws/prices")
+async def websocket_prices(websocket: WebSocket):
+    await websocket.accept()
+    try:
+        while True:
+            data = await websocket.receive_text()
+            import json as _json, random
+            symbols = _json.loads(data).get("symbols", [])
+            prices = {s: round(random.uniform(100, 5000), 2) for s in symbols}
+            await websocket.send_json({"prices": prices, "timestamp": __import__("datetime").datetime.now().isoformat()})
+    except WebSocketDisconnect:
+        pass
 
 
 if __name__ == "__main__":

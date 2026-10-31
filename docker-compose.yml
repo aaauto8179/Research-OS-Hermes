@@ -54,6 +54,32 @@ services:
       timeout: 10s
       retries: 3
 
+  math-engine:
+    build: ./math-engine
+    container_name: research-os-math-engine
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONPATH=/app/src:/app/api
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  data-ingestion:
+    build: ./data-ingestion
+    container_name: research-os-data-ingestion
+    ports:
+      - "8001:8001"
+    environment:
+      - PYTHONPATH=/app/src:/app/api
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
   # Optional: pgAdmin for DB UI
   pgadmin:
     image: dpage/pgadmin4:latest

@@ -11,6 +11,10 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from data_ingestion.chunkers import SlidingWindowChunker
+from data_ingestion.embeddings import VectorStore
+from data_ingestion.rag import CitationEngine
+from data_ingestion.classifiers import DocumentClassifier
 
 app = FastAPI(title="Research OS Data Ingestion", version="1.0.0")
 
@@ -81,6 +85,45 @@ async def ingest(request: Request):
         "status": "ingested",
         "chunks": 5,
     })
+
+
+@app.post("/chunk")
+async def chunk(request: Request):
+    data = await request.json()
+    text = data.get('text', '')
+    chunk_size = data.get('chunk_size', 512)
+    overlap = data.get('overlap', 50)
+    chunker = SlidingWindowChunker(chunk_size=chunk_size, overlap=overlap)
+    chunks = chunker.chunk(text, metadata=data.get('metadata', {}))
+    return JSONResponse(content={"chunks": [{"text": c.text, "start_idx": c.start_idx, "end_idx": c.end_idx, "metadata": c.metadata} for c in chunks]})
+
+@app.post("/classify")
+async def classify(request: Request):
+    data = await request.json()
+    text = data.get('text', '')
+    classifier = DocumentClassifier()
+    result = classifier.classify_with_confidence(text)
+    return JSONResponse(content=result)
+
+@app.post("/search")
+async def search(request: Request):
+    data = await request.json()
+    query = data.get('query', '')
+    top_k = data.get('top_k', 5)
+    # In production: embed query, search vector store
+    engine = CitationEngine()
+    result = engine.answer(query, top_k=top_k)
+    return JSONResponse(content=result)
+
+@app.post("/embed")
+async def embed(request: Request):
+    data = await request.json()
+    texts = data.get('texts', [])
+    # In production: use BGE-M3 or OpenAI embeddings
+    # For now, return mock embeddings
+    import random
+    embeddings = [[random.random() for _ in range(1024)] for _ in texts]
+    return JSONResponse(content={"embeddings": embeddings, "dimension": 1024})
 
 
 if __name__ == "__main__":

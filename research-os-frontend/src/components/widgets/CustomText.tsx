@@ -1,10 +1,12 @@
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function CustomText() {
   return (
     <Card className="h-full">
-      <CardContent className="p-4">
-        <p className="text-sm text-muted-foreground">CustomText widget</p>
+      <CardHeader><CardTitle>Notes</CardTitle></CardHeader>
+      <CardContent>
+        <Textarea placeholder="Add your notes here..." className="min-h-[120px]" />
       </CardContent>
     </Card>
   );
