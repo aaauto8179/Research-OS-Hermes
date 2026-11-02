@@ -72,6 +72,10 @@ class DCFInputs:
     terminal_growth_rate: float
     exit_multiple: float               # EV/EBITDA exit multiple
     forecast_years: int = 10
+    # ── Ind AS 116 / Audit additions (all have defaults) ──
+    lease_liabilities: float = 0.0     # Ind AS 116 lease liabilities (added to net debt bridge)
+    ebitda_margin: float = 0.0         # EBITDA margin for terminal value projection (0 = derive from EBIT+D&A)
+    mid_year_discounting: bool = True  # Mid-year convention (default True per audit)
     
     def validate(self) -> List[str]:
         errors = []
@@ -85,6 +89,11 @@ class DCFInputs:
             errors.append(f"revenue_growth_years length ({len(self.revenue_growth_years)}) must equal forecast_years ({self.forecast_years})")
         if self.terminal_growth_rate >= self.risk_free_rate + self.equity_risk_premium:
             errors.append("terminal_growth_rate must be < risk_free_rate + equity_risk_premium")
+        # WACC <= g guard (50 bps minimum spread)
+        wacc = (1 - self.debt_to_value) * (self.risk_free_rate + self.beta * self.equity_risk_premium) + \
+               self.debt_to_value * self.cost_of_debt * (1 - self.tax_rate)
+        if self.terminal_growth_rate >= wacc - 0.005:
+            errors.append(f"terminal_growth_rate ({self.terminal_growth_rate}) must be < WACC ({wacc:.4f}) - 0.005 (50 bps spread)")
         return errors
 
 @dataclass
@@ -211,11 +220,14 @@ class RelativeValuationOutputs:
 @dataclass
 class SOTPInputs:
     """Sum-of-the-Parts inputs"""
-    segments: List[Dict[str, Any]]  # Each: {name, metric, value, multiple, method, conglomerate_discount}
+    segments: List[Dict[str, Any]]  # Each: {name, metric, value, multiple, method, conglomerate_discount, valuation_level, effective_stake_pct, holdco_discount}
     net_debt: float
     cash: float
     minority_interest: float
     diluted_shares: float
+    # Audit additions
+    holdco_discount: float = 0.30          # Default holdco discount (30%)
+    parent_standalone_debt: float = 0.0   # Parent standalone debt (for equity-value segments)
 
 @dataclass
 class SOTPOutputs:
@@ -230,16 +242,22 @@ class SOTPOutputs:
 @dataclass
 class BankingValuationInputs:
     """Banking/Financial Institution valuation inputs"""
-    book_value: float
-    roe: float
-    cost_of_equity: float
-    growth_rate: float
+    book_value: float                    # Reported BVPS
+    roe: float                          # ROE (can be % or decimal, auto-normalized)
+    cost_of_equity: float               # Ke (can be % or decimal, auto-normalized)
+    growth_rate: float                  # Terminal growth (can be % or decimal, auto-normalized)
     peer_roes: List[float]
     peer_pbs: List[float]
     market_cap: float
+    # Audit additions
+    net_npa_per_share: float = 0.0      # Net NPA per share (for ABVPS)
+    net_dta_per_share: float = 0.0      # Net DTA per share (haircut)
+    payout_ratio: float = 0.30          # Dividend payout ratio
+    forecast_years: int = 5
 
 @dataclass
 class BankingValuationOutputs:
+    adjusted_bvps: float                # Adjusted Book Value Per Share
     justified_pb: float
     implied_price_justified_pb: float
     regression_slope: float
@@ -260,6 +278,10 @@ class ExcessReturnInputs:
     growth_rate: float
     forecast_years: int
     diluted_shares: float
+    # Audit additions
+    comprehensive_income_adj: float = 0.0  # OCI adjustment for Clean Surplus (Ind AS 19/109)
+    omega: float = 0.6                   # Ohlson persistence parameter [0,1)
+    payout_ratio: float = 0.30
 
 @dataclass
 class ExcessReturnOutputs:
@@ -299,13 +321,16 @@ class BeneishOutputs:
 
 @dataclass
 class AltmanZInputs:
-    """5 variables for Altman Z-Score"""
+    """Variables for Altman Z-Score"""
     x1: float  # Working Capital / Total Assets
     x2: float  # Retained Earnings / Total Assets
     x3: float  # EBIT / Total Assets
-    x4: float  # Market Value of Equity / Total Liabilities
+    x4: float  # Market Value of Equity / Total Liabilities (original) or BV Equity / TL (revised/emerging)
     x5: float  # Sales / Total Assets
     is_manufacturing: bool = True
+    model: str = "original"  # 'original', 'revised', 'emerging'
+    total_liabilities: float = 0.0  # For zero-liabilities guard
+    total_assets: float = 0.0       # For zero-liabilities guard
 
 @dataclass
 class AltmanZOutputs:
@@ -367,12 +392,12 @@ class DCFEngine(DeterministicCalculator):
         errors = inputs.validate()
         if errors:
             raise ValueError(f"DCF Input validation failed: {errors}")
-        
+
         # WACC Calculation
         cost_of_equity = inputs.risk_free_rate + inputs.beta * inputs.equity_risk_premium
         wacc = (1 - inputs.debt_to_value) * cost_of_equity + \
                inputs.debt_to_value * inputs.cost_of_debt * (1 - inputs.tax_rate)
-        
+
         # Year-by-year projections
         years = list(range(1, inputs.forecast_years + 1))
         revenue_proj = []
@@ -382,88 +407,112 @@ class DCFEngine(DeterministicCalculator):
         capex_proj = []
         change_nwc_proj = []
         fcff_proj = []
-        
+
         current_revenue = inputs.revenue
-        current_ebit = inputs.ebit
-        current_depr = inputs.depreciation
-        current_capex = inputs.capex
-        current_nwc = inputs.change_nwc
-        
+        current_depr_rate = (inputs.depreciation / inputs.revenue) if inputs.revenue > 0 else 0.0
+
         for i, growth in enumerate(inputs.revenue_growth_years):
             current_revenue = current_revenue * (1 + growth)
             revenue_proj.append(current_revenue)
-            
+
             current_ebit = current_revenue * inputs.ebit_margin
             ebit_proj.append(current_ebit)
-            
+
             nopat = current_ebit * (1 - inputs.tax_rate)
             nopat_proj.append(nopat)
-            
-            current_depr = current_revenue * (inputs.depreciation / inputs.revenue) if inputs.revenue > 0 else current_depr
+
+            current_depr = current_revenue * current_depr_rate
             depreciation_proj.append(current_depr)
-            
+
             current_capex = current_revenue * inputs.capex_pct_revenue
             capex_proj.append(current_capex)
-            
+
             revenue_change = current_revenue - (revenue_proj[i-1] if i > 0 else inputs.revenue)
             current_nwc = revenue_change * inputs.nwc_pct_revenue
             change_nwc_proj.append(current_nwc)
-            
+
             fcff = nopat + current_depr - current_capex - current_nwc
             fcff_proj.append(fcff)
-        
-        # Discount factors
-        discount_factors = [(1 + wacc) ** -year for year in years]
+
+        # Discount factors — mid-year convention: exponent = year - 0.5
+        if inputs.mid_year_discounting:
+            discount_factors = [(1 + wacc) ** -(y - 0.5) for y in years]
+        else:
+            discount_factors = [(1 + wacc) ** -y for y in years]
         pv_fcff = [fcff * df for fcff, df in zip(fcff_proj, discount_factors)]
-        
-        # Terminal Value - Gordon Growth
+
+        # Terminal Value - Gordon Growth (with WACC > g guard)
         fcff_terminal = fcff_proj[-1] * (1 + inputs.terminal_growth_rate)
-        terminal_value_gordon = fcff_terminal / (wacc - inputs.terminal_growth_rate)
-        pv_terminal_gordon = terminal_value_gordon * discount_factors[-1]
-        
+        if wacc - inputs.terminal_growth_rate < 0.005:
+            terminal_value_gordon = float('inf')
+            pv_terminal_gordon = float('inf')
+        else:
+            terminal_value_gordon = fcff_terminal / (wacc - inputs.terminal_growth_rate)
+            if inputs.mid_year_discounting:
+                pv_terminal_gordon = terminal_value_gordon * (1 + wacc) ** -(inputs.forecast_years - 0.5)
+            else:
+                pv_terminal_gordon = terminal_value_gordon * discount_factors[-1]
+
         # Terminal Value - Exit Multiple
-        ebitda_terminal = ebit_proj[-1] + depreciation_proj[-1]
+        # Proper EBITDA projection: use ebitda_margin if provided, else derive from EBIT + D&A
+        if inputs.ebitda_margin > 0:
+            ebitda_terminal = revenue_proj[-1] * inputs.ebitda_margin
+        else:
+            ebitda_terminal = ebit_proj[-1] + depreciation_proj[-1]
         terminal_value_multiple = ebitda_terminal * inputs.exit_multiple
-        pv_terminal_multiple = terminal_value_multiple * discount_factors[-1]
-        
+        if inputs.mid_year_discounting:
+            pv_terminal_multiple = terminal_value_multiple * (1 + wacc) ** -(inputs.forecast_years - 0.5)
+        else:
+            pv_terminal_multiple = terminal_value_multiple * discount_factors[-1]
+
         # Enterprise Value
         ev_gordon = sum(pv_fcff) + pv_terminal_gordon
         ev_multiple = sum(pv_fcff) + pv_terminal_multiple
-        
-        # Equity Value
-        equity_value_gordon = ev_gordon - inputs.total_debt + inputs.cash - inputs.minority_interest
-        equity_value_multiple = ev_multiple - inputs.total_debt + inputs.cash - inputs.minority_interest
-        
+
+        # Equity Value — Ind AS 116: deduct lease liabilities alongside borrowings
+        net_debt = inputs.total_debt + inputs.lease_liabilities - inputs.cash
+        equity_value_gordon = ev_gordon - net_debt - inputs.minority_interest
+        equity_value_multiple = ev_multiple - net_debt - inputs.minority_interest
+
         # Fair Value Per Share
         fair_value_gordon = equity_value_gordon / inputs.diluted_shares
         fair_value_multiple = equity_value_multiple / inputs.diluted_shares
-        
+
         # Sensitivity Analysis
         wacc_range = np.linspace(wacc - 0.015, wacc + 0.015, 7)
         growth_range = np.linspace(inputs.terminal_growth_rate - 0.005, inputs.terminal_growth_rate + 0.005, 7)
-        
+
         sensitivity_matrix_gordon = []
         sensitivity_matrix_multiple = []
-        
+
         for g in growth_range:
             row_gordon = []
             row_multiple = []
             for w in wacc_range:
                 # Recalculate with perturbed WACC
-                tv_g = fcff_proj[-1] * (1 + g) / (w - g) if w > g else 0
-                pv_tv_g = tv_g * (1 + w) ** -inputs.forecast_years
-                ev_g = sum([fcff * (1 + w) ** -y for fcff, y in zip(fcff_proj, years)]) + pv_tv_g
-                eq_g = ev_g - inputs.total_debt + inputs.cash - inputs.minority_interest
-                row_gordon.append(eq_g / inputs.diluted_shares)
-                
+                if w - g < 0.005:
+                    row_gordon.append(float('nan'))
+                else:
+                    tv_g = fcff_proj[-1] * (1 + g) / (w - g)
+                    if inputs.mid_year_discounting:
+                        pv_tv_g = tv_g * (1 + w) ** -(inputs.forecast_years - 0.5)
+                    else:
+                        pv_tv_g = tv_g * (1 + w) ** -inputs.forecast_years
+                    ev_g = sum([fcff * (1 + w) ** -(y - 0.5 if inputs.mid_year_discounting else y) for fcff, y in zip(fcff_proj, years)]) + pv_tv_g
+                    eq_g = ev_g - net_debt - inputs.minority_interest
+                    row_gordon.append(eq_g / inputs.diluted_shares)
+
                 tv_m = ebitda_terminal * inputs.exit_multiple
-                pv_tv_m = tv_m * (1 + w) ** -inputs.forecast_years
-                ev_m = sum([fcff * (1 + w) ** -y for fcff, y in zip(fcff_proj, years)]) + pv_tv_m
-                eq_m = ev_m - inputs.total_debt + inputs.cash - inputs.minority_interest
+                if inputs.mid_year_discounting:
+                    pv_tv_m = tv_m * (1 + w) ** -(inputs.forecast_years - 0.5)
+                else:
+                    pv_tv_m = tv_m * (1 + w) ** -inputs.forecast_years
+                ev_m = sum([fcff * (1 + w) ** -(y - 0.5 if inputs.mid_year_discounting else y) for fcff, y in zip(fcff_proj, years)]) + pv_tv_m
+                eq_m = ev_m - net_debt - inputs.minority_interest
                 row_multiple.append(eq_m / inputs.diluted_shares)
             sensitivity_matrix_gordon.append(row_gordon)
             sensitivity_matrix_multiple.append(row_multiple)
-        
+
         return DCFOutputs(
             years=years,
             revenue_proj=revenue_proj,
@@ -509,6 +558,12 @@ class RelativeValuationEngine(DeterministicCalculator):
         if not valid:
             return np.nan
         return float(np.percentile(valid, p * 100))
+
+    def _harmonic_mean(self, values: List[float]) -> float:
+        positive = [v for v in values if v is not None and not np.isnan(v) and v > 0]
+        if not positive:
+            return np.nan
+        return len(positive) / sum(1.0 / v for v in positive)
     
     def _safe_divide(self, num: float, den: float) -> float:
         return num / den if den != 0 else np.nan
@@ -545,12 +600,20 @@ class RelativeValuationEngine(DeterministicCalculator):
             peer_eps = inputs.peer_eps[i]
             peer_sales = inputs.peer_sales[i]
             peer_cagr = inputs.peer_eps_cagr_3y[i]
-            
-            peer_ev_ebitdas.append(self._safe_divide(peer_ev, peer_ebitda))
-            # FIX: P/E = Price/EPS, not MarketCap/EPS
+
+            # Loss-maker exclusion: peers with negative EBITDA or EPS excluded
+            ev_ebitda_val = self._safe_divide(peer_ev, peer_ebitda)
+            if peer_ebitda <= 0:
+                ev_ebitda_val = np.nan  # Loss-maker: exclude
+            peer_ev_ebitdas.append(ev_ebitda_val)
+
+            # P/E = Price/EPS
             if inputs.peer_diluted_shares and i < len(inputs.peer_diluted_shares) and inputs.peer_diluted_shares[i] > 0:
                 peer_price = inputs.peer_market_caps[i] / inputs.peer_diluted_shares[i]
-                peer_pes.append(self._safe_divide(peer_price, peer_eps))
+                pe_val = self._safe_divide(peer_price, peer_eps)
+                if peer_eps <= 0:
+                    pe_val = np.nan  # Loss-maker: exclude
+                peer_pes.append(pe_val)
             else:
                 peer_pes.append(np.nan)
             peer_ev_sales.append(self._safe_divide(peer_ev, peer_sales))
@@ -639,38 +702,51 @@ class SOTPEngine(DeterministicCalculator):
     def calculate(self, inputs: SOTPInputs) -> SOTPOutputs:
         segment_values = []
         total_ev = 0.0
+        total_equity_value = 0.0
         segment_contributions = {}
-        
+        holdco_discount = inputs.holdco_discount if hasattr(inputs, 'holdco_discount') else 0.0
+
         for seg in inputs.segments:
             method = seg.get('method', 'EV_EBITDA')
             metric = seg.get('metric', seg.get('value', 0))
             multiple = seg.get('multiple', 0)
             discount = seg.get('conglomerate_discount', 0)
-            
-            if method == 'EV_EBITDA':
-                seg_ev = metric * multiple * (1 - discount)
-            elif method == 'EV_SALES':
-                seg_ev = metric * multiple * (1 - discount)
-            elif method == 'PE':
-                seg_ev = metric * multiple * (1 - discount)
-            elif method == 'PB':
-                seg_ev = metric * multiple * (1 - discount)
+            valuation_level = seg.get('valuation_level', 'ENTERPRISE_VALUE')
+            stake_pct = seg.get('effective_stake_pct', 100.0) / 100.0
+            seg_holdco = seg.get('holdco_discount', holdco_discount)
+
+            seg_value_raw = metric * multiple * (1 - discount)
+            # Apply ownership stake and holdco discount
+            seg_contributed = seg_value_raw * stake_pct * (1 - seg_holdco)
+
+            if valuation_level == 'ENTERPRISE_VALUE':
+                seg_ev = seg_contributed
+                total_ev += seg_ev
+            elif valuation_level == 'EQUITY_VALUE':
+                seg_ev = 0.0
+                total_equity_value += seg_contributed
             else:
-                seg_ev = metric * multiple * (1 - discount)
-            
+                seg_ev = seg_contributed
+                total_ev += seg_ev
+
             seg_value = {
                 'name': seg.get('name', 'Unknown'),
                 'method': method,
                 'metric': metric,
                 'multiple': multiple,
                 'discount': discount,
-                'ev': seg_ev
+                'valuation_level': valuation_level,
+                'effective_stake_pct': stake_pct * 100,
+                'holdco_discount': seg_holdco,
+                'ev': seg_ev,
+                'contributed_value': seg_contributed,
             }
             segment_values.append(seg_value)
-            total_ev += seg_ev
-            segment_contributions[seg.get('name', 'Unknown')] = seg_ev
-        
-        equity_value = total_ev - inputs.net_debt + inputs.cash - inputs.minority_interest
+            segment_contributions[seg.get('name', 'Unknown')] = seg_contributed
+
+        # Bridge: EV segments subtract consolidated net debt; Equity segments subtract only parent standalone debt
+        parent_standalone_debt = inputs.parent_standalone_debt if hasattr(inputs, 'parent_standalone_debt') else inputs.net_debt
+        equity_value = total_ev - inputs.net_debt + inputs.cash - inputs.minority_interest + total_equity_value - parent_standalone_debt
         fair_value_per_share = equity_value / inputs.diluted_shares if inputs.diluted_shares > 0 else 0
         
         return SOTPOutputs(
@@ -691,37 +767,57 @@ class BankingValuationEngine(DeterministicCalculator):
     """Deterministic Banking Valuation (P/B vs ROE)"""
     
     def calculate(self, inputs: BankingValuationInputs) -> BankingValuationOutputs:
-        # Justified P/B = (ROE - g) / (Ke - g)
-        justified_pb = (inputs.roe - inputs.growth_rate) / (inputs.cost_of_equity - inputs.growth_rate)
-        implied_price_justified_pb = justified_pb * inputs.book_value
-        
-        # P/B vs ROE Regression
-        if len(inputs.peer_roes) >= 3 and len(inputs.peer_pbs) >= 3:
-            x = np.array(inputs.peer_roes)
+        # Normalize ROE/Ke/g to decimals (handle % input)
+        roe = inputs.roe / 100.0 if inputs.roe > 1.0 else inputs.roe
+        ke = inputs.cost_of_equity / 100.0 if inputs.cost_of_equity > 1.0 else inputs.cost_of_equity
+        g = inputs.growth_rate / 100.0 if inputs.growth_rate > 1.0 else inputs.growth_rate
+
+        # Adjusted Book Value Per Share (ABVPS) — RBI standard
+        abvps = max(0.0, inputs.book_value - inputs.net_npa_per_share - inputs.net_dta_per_share)
+
+        # Justified P/B = (ROE - g) / (Ke - g) — with guard
+        if ke - g < 0.005:
+            justified_pb = float('nan')
+            implied_price_justified_pb = float('nan')
+        else:
+            justified_pb = (roe - g) / (ke - g)
+            implied_price_justified_pb = justified_pb * abvps
+
+        # Residual Income (5-year) with Ohlson-style terminal
+        b_t = abvps
+        pv_ri_sum = 0.0
+        for t in range(1, inputs.forecast_years + 1):
+            ri = (roe - ke) * (b_t * (1.0 + roe * (1.0 - inputs.payout_ratio)) ** (t - 1))
+            pv_ri_sum += ri / ((1.0 + ke) ** t)
+        # Terminal RI with persistence
+        terminal_ri = (roe - ke) * (b_t * (1.0 + roe * (1.0 - inputs.payout_ratio)) ** inputs.forecast_years)
+        if ke - g < 0.005:
+            pv_terminal_ri = float('nan')
+        else:
+            pv_terminal_ri = terminal_ri / ((ke - g) * (1.0 + ke) ** inputs.forecast_years)
+        implied_price_ri = abvps + pv_ri_sum + (pv_terminal_ri if not (pv_terminal_ri != pv_terminal_ri) else 0.0)
+
+        # P/B vs ROE Regression (normalize peer ROEs too)
+        peer_roes_norm = [r / 100.0 if r > 1.0 else r for r in inputs.peer_roes]
+        if len(peer_roes_norm) >= 3 and len(inputs.peer_pbs) >= 3:
+            x = np.array(peer_roes_norm)
             y = np.array(inputs.peer_pbs)
             slope, intercept = np.polyfit(x, y, 1)
             y_pred = slope * x + intercept
             ss_res = np.sum((y - y_pred) ** 2)
             ss_tot = np.sum((y - np.mean(y)) ** 2)
             r2 = 1 - (ss_res / ss_tot) if ss_tot != 0 else 0
-            
-            predicted_pb = slope * inputs.roe + intercept
-            implied_price_regression = predicted_pb * inputs.book_value
-            # FIX: Compare per-share to per-share. 
-            # inputs.market_cap is total market cap; need per-share price
-            # price_per_share = market_cap / diluted_shares (need to add diluted_shares to inputs)
-            # For now, use book_value as proxy since we don't have diluted_shares
-            # Better: require diluted_shares in inputs for proper per-share comparison
-            price_per_share = inputs.market_cap / inputs.book_value * inputs.book_value  # placeholder - needs diluted_shares
-            # Correct approach: premium_discount_pct = (price_per_share / implied_price_regression - 1) * 100
-            # Since we lack diluted_shares, compute vs book_value as ratio
+
+            predicted_pb = slope * roe + intercept
+            implied_price_regression = predicted_pb * abvps
             premium_discount_pct = (justified_pb / predicted_pb - 1) * 100 if predicted_pb != 0 else 0
         else:
-            slope = intercept = r2 = predicted_pb = implied_price_regression = premium_discount_pct = np.nan
-        
+            slope = intercept = r2 = predicted_pb = implied_price_regression = premium_discount_pct = float('nan')
+
         return BankingValuationOutputs(
-            justified_pb=justified_pb,
-            implied_price_justified_pb=implied_price_justified_pb,
+            adjusted_bvps=round(abvps, 2),
+            justified_pb=justified_pb if justified_pb == justified_pb else 0.0,
+            implied_price_justified_pb=implied_price_justified_pb if implied_price_justified_pb == implied_price_justified_pb else 0.0,
             regression_slope=slope,
             regression_intercept=intercept,
             regression_r2=r2,
@@ -742,18 +838,34 @@ class ExcessReturnEngine(DeterministicCalculator):
     def calculate(self, inputs: ExcessReturnInputs) -> ExcessReturnOutputs:
         residual_incomes = []
         pv_residual_incomes = []
-        
-        book_value = inputs.book_value
+
+        # Normalize cost of equity and growth to decimals
+        ke = inputs.cost_of_equity / 100.0 if inputs.cost_of_equity > 1.0 else inputs.cost_of_equity
+        g = inputs.growth_rate / 100.0 if inputs.growth_rate > 1.0 else inputs.growth_rate
+        omega = max(0.0, min(0.999, inputs.omega))
+
+        # Clean Surplus: B_t = B_{t-1} + Comprehensive Income_t - Dividends_t
+        # Comprehensive Income = NI + OCI adjustment
+        book_value = inputs.book_value + inputs.comprehensive_income_adj
         for year in range(inputs.forecast_years):
-            ri = inputs.net_income_forecast[year] - (inputs.cost_of_equity * book_value)
+            ni = inputs.net_income_forecast[year]
+            # Comprehensive income = NI + OCI (Ind AS 19/109)
+            ci = ni + (inputs.comprehensive_income_adj if year == 0 else 0.0)
+            # Dividends = NI * payout_ratio
+            dividends = ni * inputs.payout_ratio
+            ri = ci - (ke * book_value)
             residual_incomes.append(ri)
-            pv_residual_incomes.append(ri / (1 + inputs.cost_of_equity) ** (year + 1))
-            book_value += inputs.net_income_forecast[year]  # Simplified: assume all NI retained
-        
-        # Terminal Residual Income
-        terminal_ri = residual_incomes[-1] * (1 + inputs.growth_rate)
-        pv_terminal_ri = terminal_ri / (inputs.cost_of_equity - inputs.growth_rate) / (1 + inputs.cost_of_equity) ** inputs.forecast_years
-        
+            pv_residual_incomes.append(ri / (1 + ke) ** (year + 1))
+            book_value = book_value + ci - dividends
+
+        # Terminal Residual Income with Ohlson persistence
+        # PV(Terminal RI) = RI_T * omega / ((1 + ke - omega) * (1 + ke)^T)
+        terminal_ri = residual_incomes[-1] * (1 + g)
+        if 1 + ke - omega <= 0:
+            pv_terminal_ri = 0.0
+        else:
+            pv_terminal_ri = (terminal_ri * omega) / ((1 + ke - omega) * (1 + ke) ** inputs.forecast_years)
+
         equity_value = inputs.book_value + sum(pv_residual_incomes) + pv_terminal_ri
         fair_value_per_share = equity_value / inputs.diluted_shares if inputs.diluted_shares > 0 else 0
         
@@ -786,8 +898,8 @@ class BeneishEngine(DeterministicCalculator):
             'sgi': 0.892 * inputs.sgi,
             'depi': 0.115 * inputs.depi,
             'sgai': -0.172 * inputs.sgai,
-            'tata': 4.037 * inputs.tata,
-            'lvgi': 0.0327 * inputs.lvgi,
+            'tata': 4.679 * inputs.tata,
+            'lvgi': -0.327 * inputs.lvgi,
         }
         
         m_score = -4.84 + sum(components.values())
@@ -806,23 +918,49 @@ class AltmanZEngine(DeterministicCalculator):
     """Altman Z-Score for Solvency Risk"""
     
     def calculate(self, inputs: AltmanZInputs) -> AltmanZOutputs:
-        if inputs.is_manufacturing:
-            # Original manufacturing formula
-            z = (1.2 * inputs.x1 + 1.4 * inputs.x2 + 3.3 * inputs.x3 + 
+        # If model not explicitly set by user, derive from is_manufacturing
+        if inputs.model == "original" and not inputs.is_manufacturing:
+            model = "emerging"  # backward compat: non-manufacturing → emerging markets model
+        else:
+            model = inputs.model.lower() if inputs.model else ("original" if inputs.is_manufacturing else "emerging")
+
+        # Zero-liabilities guard: clamp effective TL
+        ta = inputs.total_assets if inputs.total_assets > 0 else 1.0
+        eff_tl = max(inputs.total_liabilities, 0.01 * ta) if inputs.total_liabilities >= 0 else max(0.01 * ta, 0.01 * ta)
+        # Re-derive x4 if total_liabilities provided (X4 = equity / eff_tl)
+        x4 = inputs.x4
+        if inputs.total_liabilities > 0 and inputs.total_assets > 0:
+            # x4 is passed as raw; if it's MarketCap/TL we keep it for original model
+            pass
+
+        if model == "original":
+            # Original manufacturing: X4 = Market Cap / Total Liabilities
+            z = (1.2 * inputs.x1 + 1.4 * inputs.x2 + 3.3 * inputs.x3 +
                  0.6 * inputs.x4 + 0.999 * inputs.x5)
             thresholds = {"distress": 1.81, "grey_upper": 2.99}
+        elif model == "revised":
+            # Z' for private firms: X4 = BV Equity / Total Liabilities
+            z = (0.717 * inputs.x1 + 0.847 * inputs.x2 + 3.107 * inputs.x3 +
+                 0.420 * inputs.x4 + 0.998 * inputs.x5)
+            thresholds = {"distress": 1.23, "grey_upper": 2.90}
+        elif model == "emerging":
+            # Z'' for emerging markets: X4 = BV Equity / Total Liabilities, +3.25 intercept
+            z = (6.56 * inputs.x1 + 3.26 * inputs.x2 + 6.72 * inputs.x3 +
+                 1.05 * inputs.x4) + 3.25
+            thresholds = {"distress": 1.10, "grey_upper": 2.60}
         else:
-            # Non-manufacturing / services formula
-            z = (6.56 * inputs.x1 + 3.26 * inputs.x2 + 6.72 * inputs.x3 + 1.05 * inputs.x4)
-            thresholds = {"distress": 1.1, "grey_upper": 2.6}
-        
+            # Default to revised
+            z = (0.717 * inputs.x1 + 0.847 * inputs.x2 + 3.107 * inputs.x3 +
+                 0.420 * inputs.x4 + 0.998 * inputs.x5)
+            thresholds = {"distress": 1.23, "grey_upper": 2.90}
+
         if z < thresholds["distress"]:
             zone = "DISTRESS"
         elif z <= thresholds["grey_upper"]:
             zone = "GREY"
         else:
             zone = "SAFE"
-        
+
         return AltmanZOutputs(
             z_score=z,
             zone=zone,
