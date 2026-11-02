@@ -35,6 +35,8 @@ const TurnaroundIndicator = dynamic(() => import("./TurnaroundIndicator"), { loa
 const RiskScore = dynamic(() => import("./RiskScore"), { loading: () => <WidgetSkeleton /> });
 const CommonSize = dynamic(() => import("./CommonSize"), { loading: () => <WidgetSkeleton /> });
 const HedgingMechanism = dynamic(() => import("./HedgingMechanism"), { loading: () => <WidgetSkeleton /> });
+const RevenueProjection = dynamic(() => import("./RevenueProjection"), { loading: () => <WidgetSkeleton /> });
+const ConcallConsistency = dynamic(() => import("./ConcallConsistency"), { loading: () => <WidgetSkeleton /> });
 
 function WidgetSkeleton() {
   return (
@@ -74,6 +76,8 @@ export const WIDGET_REGISTRY: Record<string, React.ComponentType<any>> = {
   "risk-score": RiskScore,
   "common-size": CommonSize,
   "hedging-mechanism": HedgingMechanism,
+  "revenue-projection": RevenueProjection,
+  "concall-consistency": ConcallConsistency,
 };
 
 export function WidgetRenderer({ type, props, ...rest }: { type: string; props?: any; [key: string]: any }) {
