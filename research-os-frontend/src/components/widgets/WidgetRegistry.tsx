@@ -42,6 +42,7 @@ const RelativeValuation = dynamic(() => import("./RelativeValuation"), { loading
 const SOTPValuation = dynamic(() => import("./SOTPValuation"), { loading: () => <WidgetSkeleton /> });
 const BankingValuation = dynamic(() => import("./BankingValuation"), { loading: () => <WidgetSkeleton /> });
 const ExcessReturnValuation = dynamic(() => import("./ExcessReturnValuation"), { loading: () => <WidgetSkeleton /> });
+const BeneishMScore = dynamic(() => import("./BeneishMScore"), { loading: () => <WidgetSkeleton /> });
 
 function WidgetSkeleton() {
   return (
@@ -88,6 +89,7 @@ export const WIDGET_REGISTRY: Record<string, React.ComponentType<any>> = {
   "sotp-valuation": SOTPValuation,
   "banking-valuation": BankingValuation,
   "excess-return-valuation": ExcessReturnValuation,
+  "beneish-m-score": BeneishMScore,
 };
 
 export function WidgetRenderer({ type, props, ...rest }: { type: string; props?: any; [key: string]: any }) {
