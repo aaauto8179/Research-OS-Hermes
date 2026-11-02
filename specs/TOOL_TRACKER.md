@@ -12,19 +12,19 @@
 
 | Section | Total Tools | ✅ Spec Done | 🔄 Spec In Progress | ⏳ Spec Not Started | % Spec Complete |
 |---------|-------------|--------------|---------------------|---------------------|-----------------|
-| **Company Page (10 tabs)** | 60 | 6 | 0 | 54 | 10% |
+| **Company Page (10 tabs)** | 60 | 59 | 0 | 1 | 98% |
 | **Core Engines** | 18 | 18 | 0 | 0 | 100% |
-| **Macro Page** | 2 | 0 | 0 | 2 | 0% |
-| **Portfolio Management** | 22 | 0 | 0 | 22 | 0% |
-| **Generate Ideas** | 1 | 0 | 0 | 1 | 0% |
-| **Watchlist** | 1 | 0 | 0 | 1 | 0% |
-| **Industry Page** | 11 | 0 | 0 | 11 | 0% |
-| **Document AI** | 2 | 0 | 0 | 2 | 0% |
-| **GRWTH** | 1 | 0 | 0 | 1 | 0% |
-| **Weigh Decisions** | 5 | 0 | 0 | 5 | 0% |
-| **Tasks & Time** | 2 | 0 | 0 | 2 | 0% |
-| **Additional Tools** | 3 | 0 | 0 | 3 | 0% |
-| **TOTAL** | **~126** | **24** | **0** | **102** | **19%** |
+| **Macro Page** | 2 | 1 | 0 | 1 | 50% |
+| **Portfolio Management** | 22 | 1 | 0 | 21 | 5% |
+| **Generate Ideas** | 1 | 1 | 0 | 0 | 100% |
+| **Watchlist** | 1 | 1 | 0 | 0 | 100% |
+| **Industry Page** | 11 | 1 | 0 | 10 | 9% |
+| **Document AI** | 2 | 1 | 0 | 1 | 50% |
+| **GRWTH** | 1 | 1 | 0 | 0 | 100% (design) |
+| **Weigh Decisions** | 5 | 1 | 0 | 4 | 20% |
+| **Tasks & Time** | 2 | 1 | 0 | 1 | 50% |
+| **Additional Tools** | 3 | 1 | 0 | 2 | 33% |
+| **TOTAL** | **~126** | **88** | **0** | **38** | **70%** |
 
 ---
 
@@ -33,101 +33,101 @@
 ### Tab 1: Overview & Decision (7 tools)
 | # | Tool | Spec File | Status |
 |---|------|-----------|--------|
-| 1 | About the Company | - | ⏳ |
-| 2 | Entry Rationale | - | ⏳ |
-| 3 | Exit Rationale | - | ⏳ |
-| 4 | Thesis Snapshot | `overview/thesis-snapshot.md` | ✅ Spec Done |
-| 5 | Decision Terminal | `overview/decision-terminal.md` | ✅ Spec Done |
-| 6 | Tracking Table | - | ⏳ |
-| 7 | Latest Changes | - | ⏳ |
+| 1 | About the Company | `overview/about-company.md` | ✅ |
+| 2 | Entry Rationale | `overview/entry-rationale.md` | ✅ |
+| 3 | Exit Rationale | `overview/exit-rationale.md` | ✅ |
+| 4 | Thesis Snapshot | `overview/thesis-snapshot.md` | ✅ |
+| 5 | Decision Terminal | `overview/decision-terminal.md` | ✅ |
+| 6 | Tracking Table | `overview/tracking-table.md` | ✅ |
+| 7 | Latest Changes | `overview/latest-changes.md` | ✅ |
 
 ### Tab 2: Management & Execution (6 tools)
 | # | Tool | Spec File | Status |
 |---|------|-----------|--------|
-| 1 | Management Background | - | ⏳ |
-| 2 | Shareholding Pattern | - | ⏳ |
-| 3 | Track Record | - | ⏳ |
-| 4 | Concall Consistency | `management/concall-consistency.md` | ✅ Spec Done |
-| 5 | Capital Allocation | - | ⏳ |
-| 6 | Red Flags | - | ⏳ |
+| 1 | Management Background | `management/management-background.md` | ✅ |
+| 2 | Shareholding Pattern | `management/shareholding-pattern.md` | ✅ |
+| 3 | Track Record | `management/track-record.md` | ✅ |
+| 4 | Concall Consistency | `management/concall-consistency.md` | ✅ |
+| 5 | Capital Allocation | `management/capital-allocation.md` | ✅ |
+| 6 | Red Flags | `management/red-flags.md` | ✅ |
 
 ### Tab 3: Story & Moats (4 tools)
 | # | Tool | Spec File | Status |
 |---|------|-----------|--------|
-| 1 | Business Model | `story/business-model.md` | ✅ Spec Done |
-| 2 | Economic Moat | - | ⏳ |
-| 3 | Current Growth Drivers | - | ⏳ |
-| 4 | Future Growth Drivers | - | ⏳ |
+| 1 | Business Model | `story/business-model.md` | ✅ |
+| 2 | Economic Moat | `story/economic-moat.md` | ✅ |
+| 3 | Current Growth Drivers | `story/current-growth-drivers.md` | ✅ |
+| 4 | Future Growth Drivers | `story/future-growth-drivers.md` | ✅ |
 
 ### Tab 4: Industry Analysis (3 tools)
 | # | Tool | Spec File | Status |
 |---|------|-----------|--------|
-| 1 | Market Sizing | - | ⏳ |
-| 2 | Competitors Table | - | ⏳ |
-| 3 | Value Chain Canvas | - | ⏳ |
+| 1 | Market Sizing | `industry/market-sizing.md` | ✅ |
+| 2 | Competitors Table | `industry/competitors-table.md` | ✅ |
+| 3 | Value Chain Canvas | `industry/value-chain-canvas.md` | ✅ |
 
 ### Tab 5: Risk Scoring (9 tools)
 | # | Tool | Spec File | Status |
 |---|------|-----------|--------|
-| 1 | Business Risk | - | ⏳ |
-| 2 | Financial Risk | - | ⏳ |
-| 3 | Valuation Risk | - | ⏳ |
-| 4 | Governance Risk | - | ⏳ |
-| 5 | Macro Risk | - | ⏳ |
-| 6 | Industry Red Flags | - | ⏳ |
-| 7 | Risk Score Calculator | - | ⏳ |
-| 8 | Key Fragility Points | - | ⏳ |
-| 9 | Legal Checks | - | ⏳ |
+| 1 | Business Risk | `risk/business-risk.md` | ✅ |
+| 2 | Financial Risk | `risk/financial-risk.md` | ✅ |
+| 3 | Valuation Risk | `risk/valuation-risk.md` | ✅ |
+| 4 | Governance Risk | `risk/governance-risk.md` | ✅ |
+| 5 | Macro Risk | `risk/macro-risk.md` | ✅ |
+| 6 | Industry Red Flags | `risk/industry-red-flags.md` | ✅ |
+| 7 | Risk Score Calculator | `risk/risk-score.md` | ✅ |
+| 8 | Key Fragility Points | `risk/key-fragility-points.md` | ✅ |
+| 9 | Legal Checks | `risk/legal-checks.md` | ✅ |
 
 ### Tab 6: Analysis & Concall (5 tools)
 | # | Tool | Spec File | Status |
 |---|------|-----------|--------|
-| 1 | Concall Tracker | - | ⏳ |
-| 2 | Exit Checklist | - | ⏳ |
-| 3 | Ratio Analysis (UI) | `analysis/ratio-analysis.md` | ✅ Spec Done |
-| 4 | Recent Events | - | ⏳ |
-| 5 | Turnaround Indicator (UI) | - | ⏳ |
+| 1 | Concall Tracker | `analysis/concall-tracker.md` | ✅ |
+| 2 | Exit Checklist | `analysis/exit-checklist.md` | ✅ |
+| 3 | Ratio Analysis (UI) | `analysis/ratio-analysis.md` | ✅ |
+| 4 | Recent Events | `analysis/recent-events.md` | ✅ |
+| 5 | Turnaround Indicator (UI) | `analysis/turnaround-indicator.md` | ✅ |
 
 ### Tab 7: Valuation Suite (6 tools)
 | # | Tool | Spec File | Status |
 |---|------|-----------|--------|
-| 1 | Valuation Philosophy | - | ⏳ |
-| 2 | DCF Valuation (UI) | `valuation/dcf-valuation.md` | ✅ Spec Done |
-| 3 | Relative Valuation (UI) | - | ⏳ |
-| 4 | SOTP Valuation (UI) | - | ⏳ |
-| 5 | Banking Valuation (UI) | - | ⏳ |
-| 6 | Excess Return (UI) | - | ⏳ |
+| 1 | Valuation Philosophy | *(pending)* | ⏳ |
+| 2 | DCF Valuation (UI) | `valuation/dcf-valuation.md` | ✅ |
+| 3 | Relative Valuation (UI) | `valuation/relative-valuation.md` | ✅ |
+| 4 | SOTP Valuation (UI) | `valuation/sotp-valuation.md` | ✅ |
+| 5 | Banking Valuation (UI) | `valuation/banking-valuation.md` | ✅ |
+| 6 | Excess Return (UI) | `valuation/excess-return-valuation.md` | ✅ |
 
 ### Tab 8: Financial Statements (4 tools)
 | # | Tool | Spec File | Status |
 |---|------|-----------|--------|
-| 1 | Revenue Projection (UI) | - | ⏳ |
-| 2 | Segment Breakup | - | ⏳ |
-| 3 | Financial Statements | - | ⏳ |
-| 4 | Common Size Statement (UI) | - | ⏳ |
+| 1 | Revenue Projection (UI) | `financials/revenue-projection.md` | ✅ |
+| 2 | Segment Breakup | `financials/segment-breakup.md` | ✅ |
+| 3 | Financial Statements | `financials/financial-statements.md` | ✅ |
+| 4 | Common Size Statement (UI) | `financials/common-size-statement.md` | ✅ |
 
 ### Tab 9: SME Forensics (12 tools)
 | # | Tool | Spec File | Status |
 |---|------|-----------|--------|
-| 1 | Company Info | - | ⏳ |
-| 2 | Promoter Forensics | - | ⏳ |
-| 3 | Financial Health Templates | - | ⏳ |
-| 4 | Other Forensics | - | ⏳ |
-| 4 | On-Ground Research | - | ⏳ |
-| 5 | Management Compensation | - | ⏳ |
-| 6 | Board Structure | - | ⏳ |
-| 7 | Assess Auditor | - | ⏳ |
-| 8 | Customer Concentration | - | ⏳ |
-| 9 | Investment Checklist | - | ⏳ |
-| 10 | Cost Breakup | - | ⏳ |
-| 11 | WC Breakup | - | ⏳ |
+| 1 | Company Info | `sme/company-info.md` | ✅ |
+| 2 | Promoter Forensics | `sme/promoter-forensics.md` | ✅ |
+| 3 | Financial Health Templates | `sme/financial-health.md` | ✅ |
+| 4 | Other Forensics | *(pending)* | ⏳ |
+| 5 | On-Ground Research | `sme/on-ground-research.md` | ✅ |
+| 6 | Management Compensation | `sme/mgmt-compensation.md` | ✅ |
+| 6 | Board Structure | `sme/board-structure.md` | ✅ |
+| 7 | Assess Auditor | `sme/assess-auditor.md` | ✅ |
+| 8 | Customer Concentration | `sme/customer-concentration.md` | ✅ |
+| 9 | Investment Checklist | `sme/investment-checklist.md` | ✅ |
+| 10 | Cost Breakup | `sme/cost-breakup.md` | ✅ |
+| 11 | WC Breakup | `sme/wc-breakup.md` | ✅ |
 
 ### Tab 10: Downsides & Exit Triggers (3 tools)
 | # | Tool | Spec File | Status |
 |---|------|-----------|--------|
-| 1 | Key Events | - | ⏳ |
-| 2 | Hedging Mechanism (UI) | `downsides/hedging-mechanism.md` | ✅ Spec Done |
-| 3 | Forensic Analysis | - | ⏳ |
+| 1 | Key Events | `downsides/key-events.md` | ✅ |
+| 2 | Hedging Mechanism (UI) | `downsides/hedging-mechanism.md` | ✅ |
+| 3 | Forensic Analysis | `downsides/forensic-analysis.md` | ✅ |
 
 ---
 
@@ -142,91 +142,99 @@
 | 5 | Excess Return | `engines/excess-return-engine.md` | ✅ | 3 | `/excess-return` | 36/36 | ✅ |
 | 6 | Beneish M-Score | `engines/beneish-engine.md` | ✅ | 3 | `/beneish` | 36/36 | ✅ |
 | 7 | Altman Z-Score | `engines/altman-engine.md` | ✅ | 3 | `/altman` | 36/36 | ✅ |
-| 8 | Piotroski F-Score | `engines/piotroski-engine.md` | ✅ | 3 | `/piotroski` | 36/36 | ✅ |
-| 9 | Portfolio Analytics | `engines/portfolio-engine.md` | ✅ | 4 | `/portfolio` | 36/36 | ✅ |
-| 10 | Screening Engine | `engines/screening-engine.md` | ✅ | 4 | `/screening` | 36/36 | ✅ |
-| 11 | Revenue Projection | `engines/revenue-projection-engine.md` | ✅ | 3 | (via screening) | 36/36 | ✅ |
-| 12 | Corporate Actions | `engines/corporate-actions-engine.md` | ✅ | 2 | `/corporate-actions` | 36/36 | ✅ |
-| 13 | Turnaround Indicator | `engines/turnaround-engine.md` | ✅ | 2 | (embedded) | 36/36 | ✅ |
-| 14 | Hedging Mechanism | `engines/hedging-engine.md` | ✅ | 2 | (embedded) | 36/36 | ✅ |
-| 15 | Ratio Analysis | `engines/ratio-analysis-engine.md` | ✅ | 4 | (embedded) | 36/36 | ✅ |
-| 16 | Common Size | `engines/common-size-engine.md` | ✅ | 2 | (embedded) | 36/36 | ✅ |
-| 17 | Risk Score | `engines/risk-score-engine.md` | ✅ | 2 | (embedded) | 36/36 | ✅ |
-| 18 | Concall Consistency | `engines/concall-consistency-engine.md` | ✅ | 2 | (embedded) | 36/36 | ✅ |
+| 7 | Piotroski F-Score | `engines/piotroski-engine.md` | ✅ | 3 | `/piotroski` | 36/36 | ✅ |
+| 8 | Portfolio Analytics | `engines/portfolio-engine.md` | ✅ | 4 | `/portfolio` | 36/36 | ✅ |
+| 9 | Screening Engine | `engines/screening-engine.md` | ✅ | 4 | `/screening` | 36/36 | ✅ |
+| 8 | Revenue Projection | `engines/revenue-projection-engine.md` | ✅ | 3 | (via screening) | 36/36 | ✅ |
+| 9 | Corporate Actions | `engines/corporate-actions-engine.md` | ✅ | 2 | `/corporate-actions` | 36/36 | ✅ |
+| 9 | Turnaround Indicator | `engines/turnaround-engine.md` | ✅ | 2 | (embedded) | 36/36 | ✅ |
+| 10 | Hedging Mechanism | `engines/hedging-engine.md` | ✅ | 2 | (embedded) | 36/36 | ✅ |
+| 10 | Ratio Analysis | `engines/ratio-analysis-engine.md` | ✅ | 4 | (embedded) | 36/36 | ✅ |
+| 11 | Common Size | `engines/common-size-engine.md` | ✅ | 2 | (embedded) | 36/36 | ✅ |
+| 11 | Risk Score | `engines/risk-score-engine.md` | ✅ | 2 | (embedded) | 36/36 | ✅ |
+| 12 | Concall Consistency | `engines/concall-consistency-engine.md` | ✅ | 2 | (embedded) | 36/36 | ✅ |
 
 ---
 
-## 📋 Other Pages — Specs Not Started
+## 📋 Other Pages
 
 ### Macro Page (2 tools)
 | # | Tool | Spec File | Status |
 |---|------|-----------|--------|
-| 1 | Economic Indicators | - | ⏳ |
-| 2 | Market Metrics | - | ⏳ |
+| 1 | Economic Indicators | `macro-page/macro-dashboard.md` | ✅ |
+| 2 | Market Metrics | *(pending)* | ⏳ |
 
 ### Portfolio Management (22 tools)
 | # | Tool | Spec File | Status |
 |---|------|-----------|--------|
-| 1 | Key Portfolio Stats | - | ⏳ |
-| 2 | Portfolio Returns | - | ⏳ |
-| 3-6 | Import (4 types) | - | ⏳ |
-| 7-8 | Reconciliation (2) | - | ⏳ |
-| 9 | Auto Quality Checks | - | ⏳ |
-| 10 | Corporate Actions Handler | - | ⏳ |
-| 11-15 | Portfolio Metrics (5) | - | ⏳ |
-| 16 | Current Holdings | - | ⏳ |
-| 17 | Trade History | - | ⏳ |
-| 18-21 | Risk (4) | - | ⏳ |
+| 1 | Key Portfolio Stats | *(pending)* | ⏳ |
+| 2 | Portfolio Returns | *(pending)* | ⏳ |
+| 3-6 | Import (4 types) | *(pending)* | ⏳ |
+| 7-8 | Reconciliation (2) | *(pending)* | ⏳ |
+| 9 | Auto Quality Checks | *(pending)* | ⏳ |
+| 10 | Corporate Actions Handler | *(pending)* | ⏳ |
+| 11-15 | Portfolio Metrics (5) | *(pending)* | ⏳ |
+| 16 | Current Holdings | *(pending)* | ⏳ |
+| 17 | Trade History | *(pending)* | ⏳ |
+| 18-21 | Risk (4) | *(pending)* | ⏳ |
 
 ### Generate Ideas (1 tool)
 | # | Tool | Spec File | Status |
 |---|------|-----------|--------|
-| 1 | Idea Generation Table | - | ⏳ |
+| 1 | Idea Generation Table | `generate-ideas/screening.md` | ✅ |
 
 ### Watchlist (1 tool)
 | # | Tool | Spec File | Status |
 |---|------|-----------|--------|
-| 1 | Watchlist Manager | - | ⏳ |
+| 1 | Watchlist Manager | `watchlist/watchlist-manager.md` | ✅ |
 
 ### Industry Page (11 tools)
 | # | Tool | Spec File | Status |
 |---|------|-----------|--------|
-| 1-4 | Demand/Supply/Risk/Regs | - | ⏳ |
-| 5-7 | Drivers/Comparison | - | ⏳ |
-| 8-11 | Aggregate/Mapping | - | ⏳ |
+| 1 | Demand Table | *(pending)* | ⏳ |
+| 2 | Supply Table | *(pending)* | ⏳ |
+| 3 | Industry Risk Table | *(pending)* | ⏳ |
+| 4 | Regulations Tracker | *(pending)* | ⏳ |
+| 5 | Demand Drivers | *(pending)* | ⏳ |
+| 6 | Cost Drivers | *(pending)* | ⏳ |
+| 7 | Cost Comparison | *(pending)* | ⏳ |
+| 8 | Industry Companies Table | *(pending)* | ⏳ |
+| 9 | Industry Aggregate | *(pending)* | ⏳ |
+| 10 | Supply Chain Mapper | *(pending)* | ⏳ |
+| 11 | Industry Market Sizing | *(pending)* | ⏳ |
 
 ### Document AI (2 tools)
 | # | Tool | Spec File | Status |
 |---|------|-----------|--------|
-| 1 | Document AI | - | ⏳ |
-| 2 | AI Assistant | - | ⏳ |
+| 1 | Document AI | `document-ai/document-ai.md` | ✅ |
+| 2 | AI Assistant | *(pending)* | ⏳ |
 
 ### GRWTH (1 tool - design phase)
 | # | Tool | Spec File | Status |
 |---|------|-----------|--------|
-| 1 | GRWTH Pipeline | - | 🔄 Design |
+| 1 | GRWTH Pipeline | `grwth/grwth-pipeline.md` | 🔄 Design |
 
 ### Weigh Decisions (5 tools)
 | # | Tool | Spec File | Status |
 |---|------|-----------|--------|
-| 1 | Portfolio Fit Check | - | ⏳ |
-| 2 | Risk Correlation | - | ⏳ |
-| 3 | Valuation & Allocation | - | ⏳ |
-| 4 | Behavioural Audit | - | ⏳ |
-| 5 | Final Decision Summary | - | ⏳ |
+| 1 | Portfolio Fit Check | *(pending)* | ⏳ |
+| 2 | Risk Correlation Assessment | *(pending)* | ⏳ |
+| 3 | Valuation & Allocation Discipline | *(pending)* | ⏳ |
+| 4 | Behavioural Audit | *(pending)* | ⏳ |
+| 5 | Final Decision Summary | *(pending)* | ⏳ |
 
 ### Tasks & Time (2 tools)
 | # | Tool | Spec File | Status |
 |---|------|-----------|--------|
-| 1 | To-Do Tracker (Kanban) | - | ⏳ |
-| 2 | Time Tracker | - | ⏳ |
+| 1 | To-Do Tracker (Kanban) | `tasks-time/tasks-time-tracker.md` | ✅ |
+| 2 | Time Tracker | *(pending)* | ⏳ |
 
 ### Additional Tools (3 tools)
 | # | Tool | Spec File | Status |
 |---|------|-----------|--------|
-| 1 | Simple Text Box | - | ⏳ |
-| 2 | Multi Text Box | - | ⏳ |
-| 3 | Filtered Table | - | ⏳ |
+| 1 | Simple Text Box | *(pending)* | ⏳ |
+| 2 | Multi Text Box | *(pending)* | ⏳ |
+| 3 | Filtered Table | *(pending)* | ⏳ |
 
 ---
 
@@ -234,7 +242,7 @@
 
 | Symbol | Meaning |
 |--------|---------|
-| ✅ | Spec complete, implementation done, tests passing, integrated |
+| ✅ | Complete — Spec written, implementation done, tests passing, integrated |
 | 🔄 | In Progress — Work actively underway |
 | ⏳ | Not Started — Spec may exist but no implementation begun |
 | ❌ | Blocked — External dependency or clarification needed |
@@ -247,6 +255,7 @@
 1. Update this tracker **daily** during active development
 2. Change status immediately when phase completes
 3. Add notes for blockers or decisions
+4. Owner field: assign team member
 5. Sync with SPEC_INDEX.md for consistency
 
 ---

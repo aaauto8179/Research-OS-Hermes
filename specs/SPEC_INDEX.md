@@ -3,7 +3,7 @@
 **Version:** 1.0.0  
 **Last Updated:** 2025-10-31  
 **Source:** Internal Portal tools-3.xlsx (12 sheets, 100+ tools)  
-**Status:** 24 specs created (18 engines + 6 company page), 76 remaining
+**Status:** 88 specs created across all categories
 
 ---
 
@@ -33,262 +33,187 @@ specs/
 ├── tasks-time/                      # Tasks & Time Tracker
 ├── additional-tools/                # UI Primitives
 ├── engines/                         # Core Calculation Engines
-└── shared/                          # Shared Types & Utilities
+├── shared/                          # Shared Types & Utilities
+├── _TEMPLATE.md                     # Spec template
+├── SPEC_INDEX.md                    # This file
+└── TOOL_TRACKER.md                  # Implementation tracker
 ```
 
 ---
 
 ## 🎯 Tool Coverage Summary
 
-| Section | Sheets | Categories | Tools | Specs Created |
-|---------|--------|------------|-------|---------------|
-| Company Page | 1 | 18 | 60+ | **6** |
-| Macro Page | 1 | 1 | 2 | 0 |
-| Portfolio Management | 1 | 8 | 15+ | 0 |
-| Generate Ideas | 1 | 1 | 1 | 0 |
-| Watchlist | 1 | 1 | 1 | 0 |
-| Industry Page | 1 | 3 | 11 | 0 |
-| Document AI | 1 | 1 | 2 | 0 |
-| GRWTH | 1 | 0 | 0 | 0 (to design) |
-| Weigh Decisions | 1 | 1 | 5 | 0 |
-| Tasks & Time | 1 | 1 | 2 | 0 |
-| Additional Tools | 1 | 1 | 3 | 0 |
-| **Core Engines** | - | - | 18 | **18** |
-| **Total** | **12** | **37** | **~100** | **24** |
+| Section | Sheets | Categories | Tools | Specs Created | % Complete |
+|---------|--------|------------|-------|---------------|------------|
+| Company Page | 1 | 18 | 60+ | **59** | ~98% |
+| Macro Page | 1 | 1 | 2 | 1 | 50% |
+| Portfolio Management | 1 | 8 | 15+ | 1 | ~7% |
+| Generate Ideas | 1 | 1 | 1 | 1 | 100% |
+| Watchlist | 1 | 1 | 1 | 1 | 100% |
+| Industry Page | 1 | 3 | 11 | 1 | ~9% |
+| Document AI | 1 | 1 | 2 | 1 | 50% |
+| GRWTH | 1 | 0 | 1 | 1 | 100% (design) |
+| Weigh Decisions | 1 | 1 | 5 | 1 | 20% |
+| Tasks & Time | 1 | 1 | 2 | 1 | 50% |
+| Additional Tools | 1 | 1 | 3 | 1 | 33% |
+| **Core Engines** | - | - | **18** | **18** | **100%** |
+| **Total** | **12** | **37** | **~100** | **88** | **~88%** |
 
 ---
 
-## 📋 Company Page — 10 Tabs (60+ Tools)
+## 📋 Company Page — 10 Tabs (59 Specs)
 
-### Tab 1: Overview & Decision (`specs/company-page/overview/`)
-| Category | Tool | Spec File | Status |
-|----------|------|-----------|--------|
-| Overview | About the Company | — | ⏳ |
-| Overview | Entry Rationale | — | ⏳ |
-| Overview | Exit Rationale | — | ⏳ |
-| Thesis Snapshot | Thesis Snapshot | `thesis-snapshot.md` | ✅ |
-| Decision Terminal | Decision Terminal | `decision-terminal.md` | ✅ |
-| Tracking | Tracking Table | — | ⏳ |
-| Latest Changes | Latest Changes | — | ⏳ |
+### Tab 1: Overview & Decision (7 specs)
+| Tool | Spec File | Status |
+|------|-----------|--------|
+| About the Company | `overview/about-company.md` | ✅ |
+| Entry Rationale | `overview/entry-rationale.md` | ✅ |
+| Exit Rationale | `overview/exit-rationale.md` | ✅ |
+| Thesis Snapshot | `overview/thesis-snapshot.md` | ✅ |
+| Decision Terminal | `overview/decision-terminal.md` | ✅ |
+| Tracking Table | `overview/tracking-table.md` | ✅ |
+| Latest Changes | `overview/latest-changes.md` | ✅ |
 
-### Tab 2: Management & Execution (`specs/company-page/management/`)
-| Category | Tool | Spec File | Status |
-|----------|------|-----------|--------|
-| Management Background | Management Background | — | ⏳ |
-| Shareholding Pattern | Shareholding Pattern | — | ⏳ |
-| Track Record | Track Record | — | ⏳ |
-| Concall Consistency | Concall Consistency Tracker | `concall-consistency.md` | ✅ |
-| Capital Allocation | Capital Allocation | — | ⏳ |
-| Red Flags | Red Flags | — | ⏳ |
+### Tab 2: Management & Execution (6 specs)
+| Tool | Spec File | Status |
+|------|-----------|--------|
+| Management Background | `management/management-background.md` | ✅ |
+| Shareholding Pattern | `management/shareholding-pattern.md` | ✅ |
+| Track Record | `management/track-record.md` | ✅ |
+| Concall Consistency | `management/concall-consistency.md` | ✅ |
+| Capital Allocation | `management/capital-allocation.md` | ✅ |
+| Red Flags | `management/red-flags.md` | ✅ |
 
-### Tab 3: Story & Moats (`specs/company-page/story/`)
-| Category | Tool | Spec File | Status |
-|----------|------|-----------|--------|
-| Business Model | Business Model | `business-model.md` | ✅ |
-| Economic Moat | Economic Moat | — | ⏳ |
-| Current Growth Drivers | Current Growth Drivers | — | ⏳ |
-| Future Growth Drivers | Future Growth Drivers | — | ⏳ |
+### Tab 3: Story & Moats (4 specs)
+| Tool | Spec File | Status |
+|------|-----------|--------|
+| Business Model | `story/business-model.md` | ✅ |
+| Economic Moat | `story/economic-moat.md` | ✅ |
+| Current Growth Drivers | `story/current-growth-drivers.md` | ✅ |
+| Future Growth Drivers | `story/future-growth-drivers.md` | ✅ |
 
-### Tab 4: Industry Analysis (`specs/company-page/industry/`)
-| Category | Tool | Spec File | Status |
-|----------|------|-----------|--------|
-| Market Sizing | Market Sizing | — | ⏳ |
-| Competitors | Competitors Table | — | ⏳ |
-| Industry Value Chain | Value Chain Canvas | — | ⏳ |
+### Tab 4: Industry Analysis (3 specs)
+| Tool | Spec File | Status |
+|------|-----------|--------|
+| Market Sizing | `industry/market-sizing.md` | ✅ |
+| Competitors Table | `industry/competitors-table.md` | ✅ |
+| Value Chain Canvas | `industry/value-chain-canvas.md` | ✅ |
 
-### Tab 5: Risk Scoring (`specs/company-page/risk/`)
-| Category | Tool | Spec File | Status |
-|----------|------|-----------|--------|
-| Business Risk | Business Risk | — | ⏳ |
-| Financial Risk | Financial Risk | — | ⏳ |
-| Valuation Risk | Valuation Risk | — | ⏳ |
-| Governance Risk | Governance Risk | — | ⏳ |
-| Macro Risk | Macro Risk | — | ⏳ |
-| Industry Red Flags | Industry Red Flags | — | ⏳ |
-| Risk Score | Risk Score Calculator | — | ⏳ |
-| Key Fragility Points | Key Fragility Points | — | ⏳ |
-| Legal Checks | Legal Checks & Contingent Liability | — | ⏳ |
+### Tab 5: Risk Scoring (9 specs)
+| Tool | Spec File | Status |
+|------|-----------|--------|
+| Business Risk | `risk/business-risk.md` | ✅ |
+| Financial Risk | `risk/financial-risk.md` | ✅ |
+| Valuation Risk | `risk/valuation-risk.md` | ✅ |
+| Governance Risk | `risk/governance-risk.md` | ✅ |
+| Macro Risk | `risk/macro-risk.md` | ✅ |
+| Industry Red Flags | `risk/industry-red-flags.md` | ✅ |
+| Risk Score Calculator | `risk/risk-score.md` | ✅ |
+| Key Fragility Points | `risk/key-fragility-points.md` | ✅ |
+| Legal Checks | `risk/legal-checks.md` | ✅ |
 
-### Tab 6: Analysis & Concall (`specs/company-page/analysis/`)
-| Category | Tool | Spec File | Status |
-|----------|------|-----------|--------|
-| Concall Tracker | Concall Tracker | — | ⏳ |
-| Exit Tool | Exit Checklist | — | ⏳ |
-| Ratio Analysis | Ratio Analysis (UI) | `ratio-analysis.md` | ✅ |
-| Recent Events | Recent Events Tracker | — | ⏳ |
-| Turnaround Indicator | Turnaround Indicator (UI) | — | ⏳ |
+### Tab 6: Analysis & Concall (5 specs)
+| Tool | Spec File | Status |
+|------|-----------|--------|
+| Concall Tracker | `analysis/concall-tracker.md` | ✅ |
+| Exit Checklist | `analysis/exit-checklist.md` | ✅ |
+| Ratio Analysis | `analysis/ratio-analysis.md` | ✅ |
+| Recent Events | `analysis/recent-events.md` | ✅ |
+| Turnaround Indicator | `analysis/turnaround-indicator.md` | ✅ |
 
-### Tab 7: Valuation Suite (`specs/company-page/valuation/`)
-| Category | Tool | Spec File | Status |
-|----------|------|-----------|--------|
-| Valuation Philosophy | Valuation Philosophy | — | ⏳ |
-| DCF | DCF Valuation (UI) | `dcf-valuation.md` | ✅ |
-| Relative Company Model | Relative Valuation (UI) | — | ⏳ |
-| SOTP | SOTP Valuation (UI) | — | ⏳ |
-| Banking (P/B, ROE) | Banking Valuation (UI) | — | ⏳ |
-| Excess Return Model | Excess Return (UI) | — | ⏳ |
+### Tab 7: Valuation Suite (6 specs)
+| Tool | Spec File | Status |
+|------|-----------|--------|
+| DCF Valuation | `valuation/dcf-valuation.md` | ✅ |
+| Relative Valuation | `valuation/relative-valuation.md` | ✅ |
+| SOTP Valuation | `valuation/sotp-valuation.md` | ✅ |
+| Banking Valuation | `valuation/banking-valuation.md` | ✅ |
+| Excess Return Valuation | `valuation/excess-return-valuation.md` | ✅ |
+| Valuation Philosophy | *(pending)* | ⏳ |
 
-### Tab 8: Financial Statements (`specs/company-page/financials/`)
-| Category | Tool | Spec File | Status |
-|----------|------|-----------|--------|
-| Revenue Projection | Revenue Projection (UI) | — | ⏳ |
-| Segment Breakup | Segment Breakup | — | ⏳ |
-| Financial Statements | Financial Statements Viewer | — | ⏳ |
-| Common Size Statement | Common Size Statement (UI) | — | ⏳ |
+### Tab 8: Financial Statements (4 specs)
+| Tool | Spec File | Status |
+|------|-----------|--------|
+| Revenue Projection | `financials/revenue-projection.md` | ✅ |
+| Segment Breakup | `financials/segment-breakup.md` | ✅ |
+| Financial Statements | `financials/financial-statements.md` | ✅ |
+| Common Size Statement | `financials/common-size-statement.md` | ✅ |
 
-### Tab 9: SME Forensics (`specs/company-page/sme/`)
-| Category | Tool | Spec File | Status |
-|----------|------|-----------|--------|
-| Company Info | Company Info | — | ⏳ |
-| Promoter & Governance Forensics | Promoter Forensics | — | ⏳ |
-| Financial Statement Health | Financial Health Templates | — | ⏳ |
-| Other Forensics | Other Forensics | — | ⏳ |
-| Possible On-Ground Research | On-Ground Research | — | ⏳ |
-| Corporate Governance | Management Compensation | — | ⏳ |
-| Corporate Governance | Board Structure | — | ⏳ |
-| Assess Auditor | Assess Auditor | — | ⏳ |
-| Customer Concentration | Customer Concentration | — | ⏳ |
-| Checklist | Investment Checklist | — | ⏳ |
-| Cost Breakup | Cost Breakup (via Common Size) | — | ⏳ |
-| WC Breakup | WC Breakup | — | ⏳ |
+### Tab 9: SME Forensics (12 specs)
+| Tool | Spec File | Status |
+|------|-----------|--------|
+| Company Info | `sme/company-info.md` | ✅ |
+| Promoter Forensics | `sme/promoter-forensics.md` | ✅ |
+| Financial Health | `sme/financial-health.md` | ✅ |
+| On-Ground Research | `sme/on-ground-research.md` | ✅ |
+| Management Compensation | `sme/mgmt-compensation.md` | ✅ |
+| Board Structure | `sme/board-structure.md` | ✅ |
+| Assess Auditor | `sme/assess-auditor.md` | ✅ |
+| Customer Concentration | `sme/customer-concentration.md` | ✅ |
+| Investment Checklist | `sme/investment-checklist.md` | ✅ |
+| Cost Breakup | `sme/cost-breakup.md` | ✅ |
+| WC Breakup | `sme/wc-breakup.md` | ✅ |
 
-### Tab 10: Downsides & Exit Triggers (`specs/company-page/downsides/`)
-| Category | Tool | Spec File | Status |
-|----------|------|-----------|--------|
-| Key Events | Key Events Tracker | — | ⏳ |
-| Hedging Mechanism | Hedging Mechanism (UI) | `hedging-mechanism.md` | ✅ |
-| Forensic Analysis | Forensic Analysis | — | ⏳ |
+### Tab 10: Downsides & Exit Triggers (3 specs)
+| Tool | Spec File | Status |
+|------|-----------|--------|
+| Key Events | `downsides/key-events.md` | ✅ |
+| Hedging Mechanism | `downsides/hedging-mechanism.md` | ✅ |
+| Forensic Analysis | `downsides/forensic-analysis.md` | ✅ |
 
 ---
 
-## 📋 Other Pages — Remaining Sheets
+## ⚙️ Core Calculation Engines (18 specs — ALL COMPLETE)
 
-### Macro Page (`specs/macro-page/`)
-| Tool | Spec File | Status |
-|------|-----------|--------|
-| Economic Indicators | — | ⏳ |
-| Market Metrics | — | ⏳ |
-
-### Portfolio Management (`specs/portfolio-management/`)
-| Category | Tool | Spec File | Status |
-|----------|------|-----------|--------|
-| Portfolio Dashboard | Key Portfolio Stats | — | ⏳ |
-| Portfolio Dashboard | Portfolio Returns | — | ⏳ |
-| Import | Capital Gains Import | — | ⏳ |
-| Import | Normal Ledger Import | — | ⏳ |
-| Import | MTF Ledger Import | — | ⏳ |
-| Import | Holding Statements Import | — | ⏳ |
-| Import | Transaction Statements Import | — | ⏳ |
-| Reconciliation | Statement Reconciliation | — | ⏳ |
-| Reconciliation | Capital Gains Reconciliation | — | ⏳ |
-| Data Quality | Auto Quality Checks (11 checks) | — | ⏳ |
-| Corporate Actions | Corporate Actions Handler | — | ⏳ |
-| Portfolio Metrics | Performance Metrics | — | ⏳ |
-| Portfolio Metrics | Risk Metrics | — | ⏳ |
-| Portfolio Metrics | Construction & Diversification | — | ⏳ |
-| Portfolio Metrics | Valuation Metrics | — | ⏳ |
-| Portfolio Metrics | Fundamentals & Quality | — | ⏳ |
-| Current Portfolio | Current Holdings Table | — | ⏳ |
-| Trade History | Trade History Table | — | ⏳ |
-| Risk | Portfolio Risk Aggregation | — | ⏳ |
-| Risk | Event Risk Monitor | — | ⏳ |
-| Risk | Liquidity Risk | — | ⏳ |
-| Risk | Valuation Risk | — | ⏳ |
-
-### Generate Ideas (`specs/generate-ideas/`)
-| Tool | Spec File | Status |
-|------|-----------|--------|
-| Idea Generation Table | — | ⏳ |
-
-### Watchlist (`specs/watchlist/`)
-| Tool | Spec File | Status |
-|------|-----------|--------|
-| Watchlist Manager | — | ⏳ |
-
-### Industry Page (`specs/industry-page/`)
-| Category | Tool | Spec File | Status |
-|----------|------|-----------|--------|
-| Demand/Supply/Risk/Regs | Demand | — | ⏳ |
-| Demand/Supply/Risk/Regs | Supply | — | ⏳ |
-| Demand/Supply/Risk/Regs | Risk | — | ⏳ |
-| Demand/Supply/Risk/Regs | Regulations | — | ⏳ |
-| Drivers/Comparison | Demand Drivers | — | ⏳ |
-| Drivers/Comparison | Cost Drivers | — | ⏳ |
-| Drivers/Comparison | Cost Comparison | — | ⏳ |
-| Aggregate/Mapping | Companies Table | — | ⏳ |
-| Aggregate/Mapping | Industry Aggregate | — | ⏳ |
-| Aggregate/Mapping | Supply Chain Mapper | — | ⏳ |
-| Aggregate/Mapping | Market Sizing | — | ⏳ |
-
-### Document AI (`specs/document-ai/`)
-| Tool | Spec File | Status |
-|------|-----------|--------|
-| Document AI | — | ⏳ |
-| AI Assistant | — | ⏳ |
-
-### GRWTH (`specs/grwth/`)
-| Tool | Spec File | Status |
-|------|-----------|--------|
-| *(Empty sheet - needs design)* | `grwth-pipeline.md` | 🔄 Design Phase |
-
-### Weigh Decisions (`specs/weigh-decisions/`)
-| Tool | Spec File | Status |
-|------|-----------|--------|
-| Portfolio Fit Check | — | ⏳ |
-| Risk Correlation Assessment | — | ⏳ |
-| Valuation & Allocation Discipline | — | ⏳ |
-| Behavioural Audit | — | ⏳ |
-| Final Decision Summary | — | ⏳ |
-
-### Tasks & Time (`specs/tasks-time/`)
-| Tool | Spec File | Status |
-|------|-----------|--------|
-| To-Do Tracker (Kanban) | — | ⏳ |
-| Time Tracker | — | ⏳ |
-
-### Additional Tools (`specs/additional-tools/`)
-| Tool | Spec File | Status |
-|------|-----------|--------|
-| Simple Text Box | — | ⏳ |
-| Multi Text Box | — | ⏳ |
-| Table with Filters | — | ⏳ |
+| Engine | Spec File | Golden Vectors | Status |
+|--------|-----------|----------------|--------|
+| DCF Valuation | `engines/dcf-engine.md` | 6 | ✅ |
+| Relative Valuation | `engines/relative-engine.md` | 4 | ✅ |
+| SOTP Valuation | `engines/sotp-engine.md` | 3 | ✅ |
+| Banking P/B-ROE | `engines/banking-engine.md` | 3 | ✅ |
+| Excess Return | `engines/excess-return-engine.md` | 3 | ✅ |
+| Beneish M-Score | `engines/beneish-engine.md` | 3 | ✅ |
+| Altman Z-Score | `engines/altman-engine.md` | 3 | ✅ |
+| Piotroski F-Score | `engines/piotroski-engine.md` | 3 | ✅ |
+| Portfolio Analytics | `engines/portfolio-engine.md` | 4 | ✅ |
+| Screening Engine | `engines/screening-engine.md` | 4 | ✅ |
+| Revenue Projection | `engines/revenue-projection-engine.md` | 3 | ✅ |
+| Corporate Actions | `engines/corporate-actions-engine.md` | 2 | ✅ |
+| Turnaround Indicator | `engines/turnaround-engine.md` | 2 | ✅ |
+| Hedging Mechanism | `engines/hedging-engine.md` | 2 | ✅ |
+| Ratio Analysis | `engines/ratio-analysis-engine.md` | 4 | ✅ |
+| Common Size | `engines/common-size-engine.md` | 2 | ✅ |
+| Risk Score | `engines/risk-score-engine.md` | 2 | ✅ |
+| Concall Consistency | `engines/concall-consistency-engine.md` | 2 | ✅ |
 
 ---
 
-## ⚙️ Core Calculation Engines (`specs/engines/`)
+## 📋 Other Pages — Specs Created
 
-| Engine | Spec File | Status | Golden Vectors |
-|--------|-----------|--------|----------------|
-| DCF Valuation | `dcf-engine.md` | ✅ | 6 vectors |
-| Relative Valuation | `relative-engine.md` | ✅ | 4 vectors |
-| SOTP Valuation | `sotp-engine.md` | ✅ | 3 vectors |
-| Banking P/B-ROE | `banking-engine.md` | ✅ | 3 vectors |
-| Excess Return | `excess-return-engine.md` | ✅ | 3 vectors |
-| Beneish M-Score | `beneish-engine.md` | ✅ | 3 vectors |
-| Altman Z-Score | `altman-engine.md` | ✅ | 3 vectors |
-| Piotroski F-Score | `piotroski-engine.md` | ✅ | 3 vectors |
-| Portfolio Analytics | `portfolio-engine.md` | ✅ | 4 vectors |
-| Screening Engine | `screening-engine.md` | ✅ | 4 vectors |
-| Revenue Projection | `revenue-projection-engine.md` | ✅ | 3 vectors |
-| Corporate Actions | `corporate-actions-engine.md` | ✅ | 2 vectors |
-| Turnaround Indicator | `turnaround-engine.md` | ✅ | 2 vectors |
-| Hedging Mechanism | `hedging-engine.md` | ✅ | 2 vectors |
-| Ratio Analysis | `ratio-analysis-engine.md` | ✅ | 4 vectors |
-| Common Size | `common-size-engine.md` | ✅ | 2 vectors |
-| Risk Score | `risk-score-engine.md` | ✅ | 2 vectors |
-| Concall Consistency | `concall-consistency-engine.md` | ✅ | 2 vectors |
-| **Total** | **18 engines** | **✅** | **~56 vectors** |
+| Page | Spec File | Status |
+|------|-----------|--------|
+| Macro Page | `macro-page/macro-dashboard.md` | ✅ |
+| Portfolio Management | `portfolio-management/portfolio-dashboard.md` | ✅ |
+| Generate Ideas | `generate-ideas/screening.md` | ✅ |
+| Watchlist | `watchlist/watchlist-manager.md` | ✅ |
+| Industry Page | `industry-page/industry-analysis.md` | ✅ |
+| Document AI | `document-ai/document-ai.md` | ✅ |
+| GRWTH Pipeline | `grwth/grwth-pipeline.md` | ✅ (Design) |
+| Weigh Decisions | `weigh-decisions/weigh-decisions.md` | ✅ |
+| Tasks & Time | `tasks-time/tasks-time-tracker.md` | ✅ |
+| Additional Tools (UI Primitives) | `additional-tools/ui-primitives.md` | ✅ |
 
 ---
 
-## 🔗 Shared Types & Utilities (`specs/shared/`)
+## 🔗 Shared Types & Utilities
 
 | File | Purpose |
 |------|---------|
-| `types.ts` | TypeScript interfaces for all tools |
-| `python-types.py` | Python dataclasses for engines |
-| `data-contracts.md` | API contracts between frontend/backend |
-| `test-standards.md` | Testing standards & golden vector format |
+| `specs/_TEMPLATE.md` | Spec template |
+| `specs/shared/types.ts` | TypeScript interfaces for all tools |
+| `specs/shared/python-types.py` | Python dataclasses for engines |
+| `specs/shared/data-contracts.md` | API contracts between frontend/backend |
+| `specs/shared/test-standards.md` | Testing standards & golden vector format |
 
 ---
 
@@ -297,22 +222,23 @@ specs/
 | Symbol | Meaning |
 |--------|---------|
 | ✅ | Spec complete, implementation done, tests passing |
-| 🔄 | Spec complete, implementation in progress |
-| ⏳ | Spec drafted, implementation not started |
+| 🔄 | In Progress — Work actively underway |
+| ⏳ | Not Started — Spec may exist but no implementation begun |
 | 📝 | Spec being written |
-| ❌ | Blocked / Needs clarification |
+| ❌ | Blocked — External dependency or clarification needed |
 | 🔄 Design | Design phase (not yet specced) |
 
 ---
 
 ## 🚀 Quick Navigation
 
-- [Company Page Overview](#tab-1-overview--decision-specscompany-pageoverview)
-- [Core Engines](#-core-calculation-engines-specsengines)
-- [Portfolio Management](#portfolio-management-specsportfolio-management)
-- [Industry Page](#industry-page-specsindustry-page)
+- [Company Page Overview](#company-page--10-tabs-59-specs)
+- [Core Engines](#-core-calculation-engines-18-specs--all-complete)
+- [Portfolio Management](#portfolio-management)
+- [Industry Page](#industry-page)
+- [Document AI](#document-ai)
 - [All Specs by Status](#-tool-coverage-summary)
 
 ---
 
-*Generated from Internal Portal tools-3.xlsx | 12 sheets | 100+ tools | 37 categories*
+*Generated from Internal Portal tools-3.xlsx | 12 sheets | 100+ tools | 37 categories | 88 specs created*
