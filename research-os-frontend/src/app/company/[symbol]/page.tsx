@@ -8,7 +8,7 @@ const TAB_CONTENT: Record<string, string[]> = {
   story: ["financial-charts", "valuation-summary", "peer-comparison"],
   management: ["ownership-analysis", "catalyst-tracker"],
   governance: ["risk-assessment", "checklist"],
-  financials: ["financial-charts", "kpi-cards"],
+  financials: ["financial-charts", "kpi-cards", "ratio-analysis"],
   valuation: ["valuation-summary"],
   risk: ["risk-assessment", "technical-analysis"],
   sme: ["ownership-analysis", "custom-text"],

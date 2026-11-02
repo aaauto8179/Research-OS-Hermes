@@ -30,6 +30,7 @@ const PortfolioHoldings = dynamic(() => import("./PortfolioHoldings"), { loading
 const PortfolioPerformance = dynamic(() => import("./PortfolioPerformance"), { loading: () => <WidgetSkeleton /> });
 const PortfolioRisk = dynamic(() => import("./PortfolioRisk"), { loading: () => <WidgetSkeleton /> });
 const TransactionLog = dynamic(() => import("./TransactionLog"), { loading: () => <WidgetSkeleton /> });
+const RatioAnalysis = dynamic(() => import("./RatioAnalysis"), { loading: () => <WidgetSkeleton /> });
 
 function WidgetSkeleton() {
   return (
@@ -64,6 +65,7 @@ export const WIDGET_REGISTRY: Record<string, React.ComponentType<any>> = {
   "portfolio-performance": PortfolioPerformance,
   "portfolio-risk": PortfolioRisk,
   "transaction-log": TransactionLog,
+  "ratio-analysis": RatioAnalysis,
 };
 
 export function WidgetRenderer({ type, props, ...rest }: { type: string; props?: any; [key: string]: any }) {
