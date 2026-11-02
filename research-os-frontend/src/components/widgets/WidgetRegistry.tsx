@@ -40,6 +40,7 @@ const ConcallConsistency = dynamic(() => import("./ConcallConsistency"), { loadi
 const DCFValuation = dynamic(() => import("./DCFValuation"), { loading: () => <WidgetSkeleton /> });
 const RelativeValuation = dynamic(() => import("./RelativeValuation"), { loading: () => <WidgetSkeleton /> });
 const SOTPValuation = dynamic(() => import("./SOTPValuation"), { loading: () => <WidgetSkeleton /> });
+const BankingValuation = dynamic(() => import("./BankingValuation"), { loading: () => <WidgetSkeleton /> });
 
 function WidgetSkeleton() {
   return (
@@ -84,6 +85,7 @@ export const WIDGET_REGISTRY: Record<string, React.ComponentType<any>> = {
   "dcf-valuation": DCFValuation,
   "relative-valuation": RelativeValuation,
   "sotp-valuation": SOTPValuation,
+  "banking-valuation": BankingValuation,
 };
 
 export function WidgetRenderer({ type, props, ...rest }: { type: string; props?: any; [key: string]: any }) {
