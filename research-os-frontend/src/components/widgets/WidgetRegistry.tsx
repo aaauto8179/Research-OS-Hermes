@@ -34,6 +34,7 @@ const RatioAnalysis = dynamic(() => import("./RatioAnalysis"), { loading: () => 
 const TurnaroundIndicator = dynamic(() => import("./TurnaroundIndicator"), { loading: () => <WidgetSkeleton /> });
 const RiskScore = dynamic(() => import("./RiskScore"), { loading: () => <WidgetSkeleton /> });
 const CommonSize = dynamic(() => import("./CommonSize"), { loading: () => <WidgetSkeleton /> });
+const HedgingMechanism = dynamic(() => import("./HedgingMechanism"), { loading: () => <WidgetSkeleton /> });
 
 function WidgetSkeleton() {
   return (
@@ -72,6 +73,7 @@ export const WIDGET_REGISTRY: Record<string, React.ComponentType<any>> = {
   "turnaround-indicator": TurnaroundIndicator,
   "risk-score": RiskScore,
   "common-size": CommonSize,
+  "hedging-mechanism": HedgingMechanism,
 };
 
 export function WidgetRenderer({ type, props, ...rest }: { type: string; props?: any; [key: string]: any }) {
