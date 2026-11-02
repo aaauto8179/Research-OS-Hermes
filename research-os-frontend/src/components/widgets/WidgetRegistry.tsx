@@ -38,6 +38,7 @@ const HedgingMechanism = dynamic(() => import("./HedgingMechanism"), { loading: 
 const RevenueProjection = dynamic(() => import("./RevenueProjection"), { loading: () => <WidgetSkeleton /> });
 const ConcallConsistency = dynamic(() => import("./ConcallConsistency"), { loading: () => <WidgetSkeleton /> });
 const DCFValuation = dynamic(() => import("./DCFValuation"), { loading: () => <WidgetSkeleton /> });
+const RelativeValuation = dynamic(() => import("./RelativeValuation"), { loading: () => <WidgetSkeleton /> });
 
 function WidgetSkeleton() {
   return (
@@ -80,6 +81,7 @@ export const WIDGET_REGISTRY: Record<string, React.ComponentType<any>> = {
   "revenue-projection": RevenueProjection,
   "concall-consistency": ConcallConsistency,
   "dcf-valuation": DCFValuation,
+  "relative-valuation": RelativeValuation,
 };
 
 export function WidgetRenderer({ type, props, ...rest }: { type: string; props?: any; [key: string]: any }) {
