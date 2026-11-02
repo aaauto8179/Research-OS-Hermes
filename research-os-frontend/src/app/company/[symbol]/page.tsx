@@ -9,7 +9,7 @@ const TAB_CONTENT: Record<string, string[]> = {
   management: ["ownership-analysis", "catalyst-tracker", "concall-consistency"],
   governance: ["risk-assessment", "checklist", "risk-score"],
   financials: ["financial-charts", "kpi-cards", "ratio-analysis", "common-size", "revenue-projection"],
-  valuation: ["valuation-summary", "revenue-projection", "dcf-valuation", "relative-valuation"],
+  valuation: ["valuation-summary", "revenue-projection", "dcf-valuation", "relative-valuation", "sotp-valuation"],
   risk: ["risk-assessment", "technical-analysis", "risk-score", "hedging-mechanism"],
   sme: ["ownership-analysis", "custom-text", "turnaround-indicator"],
   "working-capital": ["financial-charts", "kpi-cards", "common-size"],
