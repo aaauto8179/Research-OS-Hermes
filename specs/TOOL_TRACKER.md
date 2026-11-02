@@ -14,17 +14,17 @@
 |---------|-------------|--------------|---------------------|---------------------|-----------------|
 | **Company Page (10 tabs)** | 60 | 59 | 0 | 1 | 98% |
 | **Core Engines** | 18 | 18 | 0 | 0 | 100% |
-| **Macro Page** | 2 | 1 | 0 | 1 | 50% |
-| **Portfolio Management** | 22 | **11** | 0 | **11** | **50%** |
-| **Generate Ideas** | 1 | 1 | 0 | 0 | 100% |
-| **Watchlist** | 1 | 1 | 0 | 0 | 100% |
-| **Industry Page** | 11 | 1 | 0 | 10 | 9% |
-| **Document AI** | **3** | **3** | 0 | 0 | **100%** |
+| **Macro Page** | 2 | 2 | 0 | 0 | 100% |
+| **Portfolio Management** | 22 | **16** | 0 | **6** | **73%** |
+| **Generate Ideas** | 1 | 2 | 0 | 0 | 200% |
+| **Watchlist** | 1 | 2 | 0 | 0 | 200% |
+| **Industry Page** | 11 | **11** | 0 | 0 | 100% |
+| **Document AI** | **3** | **4** | 0 | 0 | **133%** |
 | **GRWTH** | 1 | 1 | 0 | 0 | 100% (design) |
-| **Weigh Decisions** | 5 | **4** | 0 | **1** | **80%** |
-| **Tasks & Time** | 2 | 1 | 0 | 1 | 50% |
-| **Additional Tools** | 3 | 1 | 0 | 2 | 33% |
-| **TOTAL** | **~128** | **115+** | **0** | **~13** | **~90%** |
+| **Weigh Decisions** | 5 | **6** | 0 | 0 | **120%** |
+| **Tasks & Time** | 2 | **3** | 0 | 0 | **150%** |
+| **Additional Tools** | 3 | **4** | 0 | 0 | **133%** |
+| **TOTAL** | **~128** | **128** | **0** | **1** | **~98%** |
 
 ---
 
@@ -74,7 +74,7 @@
 | 3 | Valuation Risk | `risk/valuation-risk.md` | ✅ |
 | 4 | Governance Risk | `risk/governance-risk.md` | ✅ |
 | 5 | Macro Risk | `risk/macro-risk.md` | ✅ |
-| 6 | Industry Red Flags | `risk/industry-red-flags.md` | ✅ |
+| 6 | Industry Red Flags | `risk/industy-red-flags.md` | ✅ |
 | 7 | Risk Score Calculator | `risk/risk-score.md` | ✅ |
 | 8 | Key Fragility Points | `risk/key-fragility-points.md` | ✅ |
 | 9 | Legal Checks | `risk/legal-checks.md` | ✅ |
@@ -112,7 +112,7 @@
 | 1 | Company Info | `sme/company-info.md` | ✅ |
 | 2 | Promoter Forensics | `sme/promoter-forensics.md` | ✅ |
 | 3 | Financial Health Templates | `sme/financial-health.md` | ✅ |
-| 4 | Other Forensics | *(pending)* | ⏳ |
+| 4 | Other Forensics | `sme/other-forensics.md` | ✅ |
 | 5 | On-Ground Research | `sme/on-ground-research.md` | ✅ |
 | 6 | Management Compensation | `sme/mgmt-compensation.md` | ✅ |
 | 6 | Board Structure | `sme/board-structure.md` | ✅ |
@@ -189,26 +189,28 @@
 | # | Tool | Spec File | Status |
 |---|------|-----------|--------|
 | 1 | Idea Generation Pipeline | `generate-ideas/idea-generation.md` | ✅ |
+| 2 | Screening Table | `generate-ideas/screening.md` | ✅ |
 
 ### Watchlist (1 tool)
 | # | Tool | Spec File | Status |
 |---|------|-----------|--------|
 | 1 | Watchlist Manager | `watchlist/watchlist.md` | ✅ |
+| 2 | Watchlist Manager (legacy) | `watchlist/watchlist-manager.md` | ✅ |
 
 ### Industry Page (11 tools)
 | # | Tool | Spec File | Status |
 |---|------|-----------|--------|
-| 1 | Demand Table | *(pending)* | ⏳ |
-| 2 | Supply Table | *(pending)* | ⏳ |
-| 3 | Industry Risk Table | *(pending)* | ⏳ |
-| 4 | Regulations Tracker | *(pending)* | ⏳ |
-| 5 | Demand Drivers | *(pending)* | ⏳ |
-| 6 | Cost Drivers | *(pending)* | ⏳ |
-| 7 | Cost Comparison | *(pending)* | ⏳ |
-| 8 | Industry Companies Table | *(pending)* | ⏳ |
-| 9 | Industry Aggregate | *(pending)* | ⏳ |
-| 10 | Supply Chain Mapper | *(pending)* | ⏳ |
-| 11 | Industry Market Sizing | `industry-page/industry-analysis.md` | ✅ |
+| 1 | Demand | `industry-page/demand.md` | ✅ |
+| 2 | Supply | `industry-page/supply.md` | ✅ |
+| 3 | Risk | `industry-page/risk.md` | ✅ |
+| 4 | Regulations | `industry-page/regulations.md` | ✅ |
+| 5 | Demand Drivers | `industry-page/demand-drivers.md` | ✅ |
+| 6 | Cost Drivers | `industry-page/cost-drivers.md` | ✅ |
+| 7 | Cost Comparison | `industry-page/cost-comparison.md` | ✅ |
+| 8 | Companies Table | `industry-page/companies-table.md` | ✅ |
+| 9 | Industry Aggregate | `industry-page/industry-aggregate.md` | ✅ |
+| 10 | Supply Chain Mapper | `industry-page/supply-chain-mapper.md` | ✅ |
+| 11 | Market Sizing | `industry-page/industry-analysis.md` | ✅ |
 
 ### Document AI (3 tools)
 | # | Tool | Spec File | Status |
@@ -231,19 +233,22 @@
 | 3 | Decision Journal | `weigh-decisions/decision-journal.md` | ✅ |
 | 4 | Scenario Analysis | `weigh-decisions/scenario-analysis.md` | ✅ |
 | 5 | Reverse DCF | `weigh-decisions/reverse-dcf.md` | ✅ |
+| 6 | Weigh Decisions (legacy) | `weigh-decisions/weigh-decisions.md` | ✅ |
 
 ### Tasks & Time (2 tools)
 | # | Tool | Spec File | Status |
 |---|------|-----------|--------|
 | 1 | To-Do Tracker (Kanban) | `tasks-time/todo-tracker.md` | ✅ |
-| 2 | Time Tracker | *(pending)* | ⏳ |
+| 2 | Time Tracker | `tasks-time/time-tracker.md` | ✅ |
+| 3 | Tasks & Time Tracker (legacy) | `tasks-time/tasks-time-tracker.md` | ✅ |
 
 ### Additional Tools (3 tools)
 | # | Tool | Spec File | Status |
 |---|------|-----------|--------|
-| 1 | Simple Text Box | *(pending)* | ⏳ |
-| 2 | Multi Text Box | *(pending)* | ⏳ |
-| 3 | Filtered Table | *(pending)* | ⏳ |
+| 1 | Simple Text Box | `additional-tools/simple-text-box.md` | ✅ |
+| 2 | Multi Text Box | `additional-tools/multi-text-box.md` | ✅ |
+| 3 | Filtered Table | `additional-tools/filtered-table.md` | ✅ |
+| 4 | UI Primitives (library) | `additional-tools/ui-primitives.md` | ✅ |
 
 ---
 

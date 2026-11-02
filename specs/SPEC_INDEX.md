@@ -3,7 +3,7 @@
 **Version:** 1.0.0  
 **Last Updated:** 2025-10-31  
 **Source:** Internal Portal tools-3.xlsx (12 sheets, 100+ tools)  
-**Status:** 88 specs created across all categories
+**Status:** 128 specs created across all categories
 
 ---
 
@@ -46,18 +46,18 @@ specs/
 | Section | Sheets | Categories | Tools | Specs Created | % Complete |
 |---------|--------|------------|-------|---------------|------------|
 | Company Page | 1 | 18 | 60+ | **59** | ~98% |
-| Macro Page | 1 | 1 | 2 | 1 | 50% |
-| Portfolio Management | 1 | 8 | 22+ | **11** | ~50% |
-| Generate Ideas | 1 | 1 | 1 | 1 | 100% |
-| Watchlist | 1 | 1 | 1 | 1 | 100% |
-| Industry Page | 1 | 3 | 11 | 1 | ~9% |
-| Document AI | 1 | 1 | 3 | **3** | 100% |
+| Macro Page | 1 | 1 | 2 | 2 | 100% |
+| Portfolio Management | 1 | 8 | 22+ | **16** | ~73% |
+| Generate Ideas | 1 | 1 | 1 | 2 | 200% |
+| Watchlist | 1 | 1 | 1 | 2 | 200% |
+| Industry Page | 1 | 3 | 11 | **11** | 100% |
+| Document AI | 1 | 1 | 3 | **4** | 133% |
 | GRWTH | 1 | 0 | 1 | 1 | 100% (design) |
-| Weigh Decisions | 1 | 1 | 5 | **4** | 80% |
-| Tasks & Time | 1 | 1 | 2 | 1 | 50% |
-| Additional Tools | 1 | 1 | 3 | 1 | 33% |
+| Weigh Decisions | 1 | 1 | 5 | **6** | 120% |
+| Tasks & Time | 1 | 1 | 2 | **3** | 150% |
+| Additional Tools | 1 | 1 | 3 | **4** | 133% |
 | **Core Engines** | - | - | **18** | **18** | **100%** |
-| **Total** | **12** | **37** | **~130** | **115+** | **~88%** |
+| **Total** | **12** | **37** | **~130** | **128** | **~98%** |
 
 ---
 
@@ -129,7 +129,7 @@ specs/
 | SOTP Valuation | `valuation/sotp-valuation.md` | ✅ |
 | Banking Valuation | `valuation/banking-valuation.md` | ✅ |
 | Excess Return Valuation | `valuation/excess-return-valuation.md` | ✅ |
-| Valuation Philosophy | *(pending)* | ⏳ |
+| Valuation Philosophy | `valuation/valuation-philosophy.md` | ✅ |
 
 ### Tab 8: Financial Statements (4 specs)
 | Tool | Spec File | Status |
@@ -153,6 +153,7 @@ specs/
 | Investment Checklist | `sme/investment-checklist.md` | ✅ |
 | Cost Breakup | `sme/cost-breakup.md` | ✅ |
 | WC Breakup | `sme/wc-breakup.md` | ✅ |
+| Other Forensics | `sme/other-forensics.md` | ✅ |
 
 ### Tab 10: Downsides & Exit Triggers (3 specs)
 | Tool | Spec File | Status |
@@ -193,6 +194,7 @@ specs/
 | Page | Spec File | Status |
 |------|-----------|--------|
 | Macro Page | `macro-page/market-metrics.md` | ✅ |
+| Macro Page | `macro-page/macro-dashboard.md` | ✅ |
 | Portfolio Management | `portfolio-management/portfolio-dashboard.md` | ✅ |
 | Portfolio Management | `portfolio-management/capital-gains-import.md` | ✅ |
 | Portfolio Management | `portfolio-management/statement-reconciliation.md` | ✅ |
@@ -210,8 +212,20 @@ specs/
 | Portfolio Management | `portfolio-management/liquidity-risk.md` | ✅ |
 | Portfolio Management | `portfolio-management/valuation-risk.md` | ✅ |
 | Generate Ideas | `generate-ideas/idea-generation.md` | ✅ |
+| Generate Ideas | `generate-ideas/screening.md` | ✅ |
 | Watchlist | `watchlist/watchlist.md` | ✅ |
+| Watchlist | `watchlist/watchlist-manager.md` | ✅ |
 | Industry Page | `industry-page/industry-analysis.md` | ✅ |
+| Industry Page | `industry-page/demand.md` | ✅ |
+| Industry Page | `industry-page/supply.md` | ✅ |
+| Industry Page | `industry-page/risk.md` | ✅ |
+| Industry Page | `industry-page/regulations.md` | ✅ |
+| Industry Page | `industry-page/demand-drivers.md` | ✅ |
+| Industry Page | `industry-page/cost-drivers.md` | ✅ |
+| Industry Page | `industry-page/cost-comparison.md` | ✅ |
+| Industry Page | `industry-page/companies-table.md` | ✅ |
+| Industry Page | `industry-page/industry-aggregate.md` | ✅ |
+| Industry Page | `industry-page/supply-chain-mapper.md` | ✅ |
 | Document AI | `document-ai/document-ai.md` | ✅ |
 | Document AI | `document-ai/ai-assistant.md` | ✅ |
 | Document AI | `document-ai/smart-summarizer.md` | ✅ |
@@ -222,8 +236,14 @@ specs/
 | Weigh Decisions | `weigh-decisions/decision-journal.md` | ✅ |
 | Weigh Decisions | `weigh-decisions/scenario-analysis.md` | ✅ |
 | Weigh Decisions | `weigh-decisions/reverse-dcf.md` | ✅ |
+| Weigh Decisions | `weigh-decisions/weigh-decisions.md` | ✅ |
 | Tasks & Time | `tasks-time/todo-tracker.md` | ✅ |
-| Additional Tools (UI Primitives) | `additional-tools/ui-primitives.md` | ✅ |
+| Tasks & Time | `tasks-time/time-tracker.md` | ✅ |
+| Tasks & Time | `tasks-time/tasks-time-tracker.md` | ✅ |
+| Additional Tools | `additional-tools/ui-primitives.md` | ✅ |
+| Additional Tools | `additional-tools/simple-text-box.md` | ✅ |
+| Additional Tools | `additional-tools/multi-text-box.md` | ✅ |
+| Additional Tools | `additional-tools/filtered-table.md` | ✅ |
 
 ---
 
@@ -263,4 +283,4 @@ specs/
 
 ---
 
-*Generated from Internal Portal tools-3.xlsx | 12 sheets | 100+ tools | 37 categories | 115+ specs created*
+*Generated from Internal Portal tools-3.xlsx | 12 sheets | 100+ tools | 37 categories | 128 specs created*
