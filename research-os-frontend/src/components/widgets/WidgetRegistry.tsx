@@ -44,6 +44,7 @@ const BankingValuation = dynamic(() => import("./BankingValuation"), { loading: 
 const ExcessReturnValuation = dynamic(() => import("./ExcessReturnValuation"), { loading: () => <WidgetSkeleton /> });
 const BeneishMScore = dynamic(() => import("./BeneishMScore"), { loading: () => <WidgetSkeleton /> });
 const AltmanZScore = dynamic(() => import("./AltmanZScore"), { loading: () => <WidgetSkeleton /> });
+const PiotroskiFScore = dynamic(() => import("./PiotroskiFScore"), { loading: () => <WidgetSkeleton /> });
 
 function WidgetSkeleton() {
   return (
@@ -92,6 +93,7 @@ export const WIDGET_REGISTRY: Record<string, React.ComponentType<any>> = {
   "excess-return-valuation": ExcessReturnValuation,
   "beneish-m-score": BeneishMScore,
   "altman-z-score": AltmanZScore,
+  "piotroski-f-score": PiotroskiFScore,
 };
 
 export function WidgetRenderer({ type, props, ...rest }: { type: string; props?: any; [key: string]: any }) {
