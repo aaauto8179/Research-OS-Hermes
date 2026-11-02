@@ -1366,6 +1366,387 @@ class ScreeningEngine(DeterministicCalculator):
 # FACTORY & REGISTRY
 # ============================================================
 
+# ============================================================
+# RATIO ANALYSIS ENGINE
+# ============================================================
+
+@dataclass
+class RatioAnalysisInputs:
+    """Inputs for ratio analysis engine"""
+    symbol: str
+    entity_type: str = "COMMERCIAL_CORPORATE"  # COMMERCIAL_CORPORATE, BANKING, NBFC, INSURANCE
+    # P&L
+    revenue: float = 0.0
+    cogs: float = 0.0
+    ebitda: float = 0.0
+    ebit: float = 0.0
+    pat: float = 0.0
+    interest_expense: float = 0.0
+    tax_expense: float = 0.0
+    # Balance Sheet
+    total_assets: float = 0.0
+    current_assets: float = 0.0
+    cash_investments: float = 0.0
+    inventory: float = 0.0
+    receivables: float = 0.0
+    total_equity: float = 0.0
+    total_debt: float = 0.0
+    lease_liabilities: float = 0.0
+    current_liabilities: float = 0.0
+    payables: float = 0.0
+    # Market
+    market_cap: float = 0.0
+    cmp: float = 0.0
+    shares_outstanding: float = 0.0
+    # Cash Flow
+    cfo: float = 0.0
+    capex: float = 0.0
+    # Banking specific
+    interest_income: float = 0.0
+    non_interest_income: float = 0.0
+    operating_expense: float = 0.0
+    gross_npa: float = 0.0
+    net_npa: float = 0.0
+    tier1_capital: float = 0.0
+    risk_weighted_assets: float = 0.0
+    advances: float = 0.0
+    deposits: float = 0.0
+    # Averages (for turnover ratios)
+    avg_total_assets: float = 0.0
+    avg_equity: float = 0.0
+    avg_inventory: float = 0.0
+    avg_receivables: float = 0.0
+    avg_payables: float = 0.0
+    avg_net_fixed_assets: float = 0.0
+    # Growth (for CAGR)
+    revenue_prev: float = 0.0
+    ebitda_prev: float = 0.0
+    pat_prev: float = 0.0
+    eps_prev: float = 0.0
+    eps: float = 0.0
+    growth_years: int = 1
+    # Dividend
+    dividend_per_share: float = 0.0
+    # Previous period total assets for turnover
+    total_assets_prev: float = 0.0
+
+@dataclass
+class RatioAnalysisOutputs:
+    symbol: str
+    entity_type: str
+    ratios: Dict[str, Any]
+    dupont: Dict[str, Any]
+    distress_flags: List[Dict[str, str]]
+    inputs_hash: str = ""
+    calculation_timestamp: str = ""
+
+class RatioAnalysisEngine(DeterministicCalculator):
+    """Deterministic Ratio Analysis Engine with entityType branching and guardrails."""
+
+    @staticmethod
+    def _nm_if(cond: bool):
+        return "NM" if cond else None
+
+    def calculate(self, inputs: RatioAnalysisInputs) -> RatioAnalysisOutputs:
+        et = inputs.entity_type.upper()
+        ratios = {"profitability": [], "leverage": [], "liquidity": [],
+                  "efficiency": [], "valuation": [], "growth": []}
+        distress_flags = []
+
+        # Helper: safe division
+        def safe_div(num, den, zero_result="NM", neg_result="NM"):
+            if den == 0:
+                return zero_result
+            if den < 0:
+                return neg_result
+            return num / den
+
+        # ── Profitability ──
+        # ROE
+        avg_eq = inputs.avg_equity if inputs.avg_equity != 0 else inputs.total_equity
+        if avg_eq <= 0:
+            roe = "NM"
+            distress_flags.append({"type": "NEGATIVE_NET_WORTH", "severity": "CRITICAL",
+                                  "message": "Negative/zero equity — ROE not meaningful", "affectedRatios": ["ROE"]})
+        else:
+            roe = inputs.pat / avg_eq
+        ratios["profitability"].append({"name": "ROE", "value": roe, "unit": "ratio"})
+
+        # ROCE
+        cap_employed = inputs.total_assets - inputs.current_liabilities
+        avg_cap = cap_employed  # simplified
+        if avg_cap <= 0:
+            roce = "NM"
+            distress_flags.append({"type": "NEGATIVE_CAPITAL_EMPLOYED", "severity": "HIGH",
+                                  "message": "Negative capital employed", "affectedRatios": ["ROCE"]})
+        else:
+            roce = inputs.ebit / avg_cap
+        ratios["profitability"].append({"name": "ROCE", "value": roce, "unit": "ratio"})
+
+        # ROA
+        avg_ta = inputs.avg_total_assets if inputs.avg_total_assets != 0 else inputs.total_assets
+        if avg_ta <= 0:
+            roa = "NM"
+        else:
+            roa = inputs.pat / avg_ta
+        ratios["profitability"].append({"name": "ROA", "value": roa, "unit": "ratio"})
+
+        # Net Margin
+        net_margin = safe_div(inputs.pat, inputs.revenue)
+        ratios["profitability"].append({"name": "Net Margin", "value": net_margin, "unit": "pct"})
+
+        # EBITDA Margin
+        ebitda_margin = safe_div(inputs.ebitda, inputs.revenue)
+        ratios["profitability"].append({"name": "EBITDA Margin", "value": ebitda_margin, "unit": "pct"})
+
+        # Gross Margin
+        if inputs.revenue <= 0:
+            gross_margin = "NM"
+        else:
+            gross_margin = (inputs.revenue - inputs.cogs) / inputs.revenue
+        ratios["profitability"].append({"name": "Gross Margin", "value": gross_margin, "unit": "pct"})
+
+        # FCF Margin
+        fcff = inputs.cfo - inputs.capex
+        fcf_margin = safe_div(fcff, inputs.revenue)
+        ratios["profitability"].append({"name": "FCF Margin", "value": fcf_margin, "unit": "pct"})
+
+        # Banking-specific ratios
+        if et in ("BANKING", "NBFC"):
+            # NIM
+            if inputs.interest_income > 0:
+                nim = (inputs.interest_income - inputs.interest_expense) / inputs.interest_income if inputs.interest_income != 0 else "NM"
+            else:
+                earning_assets = inputs.advances + inputs.cash_investments
+                nim = safe_div(inputs.interest_income - inputs.interest_expense, earning_assets) if earning_assets > 0 else "NM"
+            ratios["profitability"].append({"name": "NIM", "value": nim, "unit": "pct"})
+
+            # Cost-to-Income
+            c2i_denom = inputs.interest_income - inputs.interest_expense + inputs.non_interest_income
+            c2i = safe_div(inputs.operating_expense, c2i_denom)
+            ratios["profitability"].append({"name": "Cost-to-Income", "value": c2i, "unit": "pct"})
+
+            # GNPA %, NNPA %
+            gnpa_pct = safe_div(inputs.gross_npa, inputs.advances) if inputs.advances > 0 else "NM"
+            nnpa_pct = safe_div(inputs.net_npa, inputs.advances) if inputs.advances > 0 else "NM"
+            ratios["profitability"].append({"name": "GNPA %", "value": gnpa_pct, "unit": "pct"})
+            ratios["profitability"].append({"name": "NNPA %", "value": nnpa_pct, "unit": "pct"})
+
+            # PCR
+            pcr = safe_div(inputs.gross_npa - inputs.net_npa, inputs.gross_npa) if inputs.gross_npa > 0 else "NM"
+            ratios["profitability"].append({"name": "PCR", "value": pcr, "unit": "pct"})
+
+            # CRAR
+            crar = safe_div(inputs.tier1_capital, inputs.risk_weighted_assets) if inputs.risk_weighted_assets > 0 else "NM"
+            ratios["profitability"].append({"name": "CRAR (Tier 1)", "value": crar, "unit": "pct"})
+
+            # CASA %
+            casa = safe_div(inputs.deposits * 0.4, inputs.deposits) if inputs.deposits > 0 else "NM"  # simplified
+            ratios["profitability"].append({"name": "CASA %", "value": casa, "unit": "pct"})
+
+        # ── Leverage ──
+        # D/E
+        if inputs.total_equity <= 0:
+            de = "NM"
+            distress_flags.append({"type": "NEGATIVE_NET_WORTH", "severity": "CRITICAL",
+                                  "message": "Negative equity — D/E not meaningful", "affectedRatios": ["D/E"]})
+        else:
+            net_debt = inputs.total_debt + inputs.lease_liabilities - inputs.cash_investments
+            if net_debt < 0:
+                de = "NET_CASH"
+            else:
+                de = inputs.total_debt / inputs.total_equity
+        ratios["leverage"].append({"name": "Debt/Equity", "value": de, "unit": "ratio"})
+
+        # Debt/EBITDA
+        net_debt = inputs.total_debt + inputs.lease_liabilities - inputs.cash_investments
+        if inputs.ebitda <= 0:
+            debt_ebitda = "NM"
+            distress_flags.append({"type": "OPERATIONAL_DISTRESS", "severity": "HIGH",
+                                  "message": "EBITDA <= 0 — Debt/EBITDA not meaningful", "affectedRatios": ["Debt/EBITDA"]})
+        elif net_debt < 0:
+            debt_ebitda = "NET_CASH"
+        else:
+            debt_ebitda = net_debt / inputs.ebitda
+        ratios["leverage"].append({"name": "Debt/EBITDA", "value": debt_ebitda, "unit": "ratio"})
+
+        # Interest Coverage
+        if inputs.interest_expense == 0:
+            if inputs.ebit > 0:
+                ic = "INFINITY"
+            else:
+                ic = "NM"
+        elif inputs.ebit <= 0:
+            ic = "NM"
+        else:
+            ic = inputs.ebit / inputs.interest_expense
+        ratios["leverage"].append({"name": "Interest Coverage", "value": ic, "unit": "times"})
+
+        # ── Liquidity ──
+        # Current Ratio
+        if inputs.current_liabilities == 0:
+            cr = "INFINITY"
+        else:
+            cr = inputs.current_assets / inputs.current_liabilities
+        ratios["liquidity"].append({"name": "Current Ratio", "value": cr, "unit": "ratio"})
+
+        # Quick Ratio
+        if inputs.current_liabilities == 0:
+            qr = "INFINITY"
+        else:
+            qr = (inputs.current_assets - inputs.inventory) / inputs.current_liabilities
+        ratios["liquidity"].append({"name": "Quick Ratio", "value": qr, "unit": "ratio"})
+
+        # Cash Ratio
+        if inputs.current_liabilities == 0:
+            cash_r = "INFINITY"
+        else:
+            cash_r = inputs.cash_investments / inputs.current_liabilities
+        ratios["liquidity"].append({"name": "Cash Ratio", "value": cash_r, "unit": "ratio"})
+
+        # Working Capital Cycle
+        inv_days = safe_div(inputs.avg_inventory, inputs.cogs) * 365 if inputs.cogs > 0 else "NM"
+        rec_days = safe_div(inputs.avg_receivables, inputs.revenue) * 365 if inputs.revenue > 0 else "NM"
+        pay_days = safe_div(inputs.avg_payables, inputs.cogs) * 365 if inputs.cogs > 0 else "NM"
+        if isinstance(inv_days, str) or isinstance(rec_days, str) or isinstance(pay_days, str):
+            wcc = "NM"
+        else:
+            wcc = inv_days + rec_days - pay_days
+        ratios["liquidity"].append({"name": "Working Capital Cycle", "value": wcc, "unit": "days"})
+
+        # ── Efficiency ──
+        # Asset Turnover
+        asset_to = safe_div(inputs.revenue, avg_ta) if avg_ta > 0 else "NM"
+        ratios["efficiency"].append({"name": "Asset Turnover", "value": asset_to, "unit": "times"})
+
+        # Inventory Turnover
+        inv_to = safe_div(inputs.cogs, inputs.avg_inventory) if inputs.avg_inventory > 0 else "NM"
+        ratios["efficiency"].append({"name": "Inventory Turnover", "value": inv_to, "unit": "times"})
+
+        # Receivables Turnover
+        rec_to = safe_div(inputs.revenue, inputs.avg_receivables) if inputs.avg_receivables > 0 else "NM"
+        ratios["efficiency"].append({"name": "Receivables Turnover", "value": rec_to, "unit": "times"})
+
+        # Payables Turnover
+        pay_to = safe_div(inputs.cogs, inputs.avg_payables) if inputs.avg_payables > 0 else "NM"
+        ratios["efficiency"].append({"name": "Payables Turnover", "value": pay_to, "unit": "times"})
+
+        # Fixed Asset Turnover
+        fat = safe_div(inputs.revenue, inputs.avg_net_fixed_assets) if inputs.avg_net_fixed_assets > 0 else "NM"
+        ratios["efficiency"].append({"name": "Fixed Asset Turnover", "value": fat, "unit": "times"})
+
+        # ── Valuation ──
+        # P/E
+        if inputs.pat <= 0 or inputs.eps <= 0:
+            pe = "NM"
+            if inputs.pat <= 0:
+                distress_flags.append({"type": "LOSS_MAKING", "severity": "HIGH",
+                                      "message": "Loss-making — P/E not meaningful", "affectedRatios": ["P/E"]})
+        else:
+            pe = inputs.market_cap / inputs.pat if inputs.pat != 0 else "NM"
+        ratios["valuation"].append({"name": "P/E", "value": pe, "unit": "ratio"})
+
+        # P/B
+        if inputs.total_equity <= 0:
+            pb = "NM"
+        else:
+            pb = inputs.market_cap / inputs.total_equity
+        ratios["valuation"].append({"name": "P/B", "value": pb, "unit": "ratio"})
+
+        # EV/EBITDA
+        ev = inputs.market_cap + inputs.total_debt + inputs.lease_liabilities - inputs.cash_investments
+        if inputs.ebitda <= 0:
+            ev_ebitda = "NM"
+        else:
+            ev_ebitda = ev / inputs.ebitda
+        ratios["valuation"].append({"name": "EV/EBITDA", "value": ev_ebitda, "unit": "ratio"})
+
+        # EV/Sales
+        if inputs.revenue <= 0:
+            ev_sales = "NM"
+        else:
+            ev_sales = ev / inputs.revenue
+        ratios["valuation"].append({"name": "EV/Sales", "value": ev_sales, "unit": "ratio"})
+
+        # FCF Yield
+        fcf_yield = safe_div(fcff, inputs.market_cap) if inputs.market_cap > 0 else "NM"
+        ratios["valuation"].append({"name": "FCF Yield", "value": fcf_yield, "unit": "pct"})
+
+        # Dividend Yield
+        if inputs.cmp <= 0:
+            div_yield = "NM"
+        else:
+            div_yield = inputs.dividend_per_share / inputs.cmp
+        ratios["valuation"].append({"name": "Dividend Yield", "value": div_yield, "unit": "pct"})
+
+        # ── Growth (CAGR) ──
+        n = inputs.growth_years if inputs.growth_years > 0 else 1
+        # Revenue CAGR
+        if inputs.revenue_prev <= 0:
+            rev_cagr = "NM"
+        else:
+            rev_cagr = (inputs.revenue / inputs.revenue_prev) ** (1.0 / n) - 1
+        ratios["growth"].append({"name": "Revenue CAGR", "value": rev_cagr, "unit": "pct"})
+
+        # EBITDA CAGR
+        if inputs.ebitda_prev <= 0:
+            ebitda_cagr = "NM"
+        else:
+            ebitda_cagr = (inputs.ebitda / inputs.ebitda_prev) ** (1.0 / n) - 1
+        ratios["growth"].append({"name": "EBITDA CAGR", "value": ebitda_cagr, "unit": "pct"})
+
+        # PAT CAGR
+        if inputs.pat_prev <= 0 if hasattr(inputs, 'pat_prev') else inputs.pat <= 0:
+            pat_cagr = "NM"
+        else:
+            pat_prev = getattr(inputs, 'pat_prev', 0)
+            if pat_prev <= 0:
+                pat_cagr = "NM"
+            else:
+                pat_cagr = (inputs.pat / pat_prev) ** (1.0 / n) - 1
+        ratios["growth"].append({"name": "PAT CAGR", "value": pat_cagr, "unit": "pct"})
+
+        # EPS CAGR
+        if inputs.eps_prev <= 0:
+            eps_cagr = "NM"
+        else:
+            eps_cagr = (inputs.eps / inputs.eps_prev) ** (1.0 / n) - 1
+        ratios["growth"].append({"name": "EPS CAGR", "value": eps_cagr, "unit": "pct"})
+
+        # ── DuPont ──
+        if avg_eq <= 0:
+            dupont = {"status": "NM", "reason": "Negative Equity"}
+        else:
+            net_margin = inputs.pat / inputs.revenue if inputs.revenue != 0 else None
+            asset_turnover = inputs.revenue / avg_ta if avg_ta != 0 else None
+            financial_leverage = avg_ta / avg_eq if avg_eq != 0 else None
+            if None in (net_margin, asset_turnover, financial_leverage):
+                dupont = {"status": "NM", "reason": "Zero denominator in DuPont"}
+            else:
+                roe_val = net_margin * asset_turnover * financial_leverage
+                dupont = {
+                    "status": "COMPUTED",
+                    "roe": roe_val,
+                    "netMargin": net_margin,
+                    "assetTurnover": asset_turnover,
+                    "financialLeverage": financial_leverage,
+                    "extended": {
+                        "taxBurden": inputs.pat / (inputs.pat + inputs.tax_expense) if (inputs.pat + inputs.tax_expense) != 0 else None,
+                        "interestBurden": (inputs.pat + inputs.tax_expense) / inputs.ebit if inputs.ebit != 0 else None,
+                        "ebitMargin": inputs.ebit / inputs.revenue if inputs.revenue != 0 else None,
+                    }
+                }
+
+        return RatioAnalysisOutputs(
+            symbol=inputs.symbol,
+            entity_type=et,
+            ratios=ratios,
+            dupont=dupont,
+            distress_flags=distress_flags,
+            inputs_hash=self._hash_inputs(inputs),
+            calculation_timestamp=datetime.now().isoformat()
+        )
+
 class MathEngineRegistry:
     """Central registry for all deterministic engines"""
     
@@ -1380,6 +1761,7 @@ class MathEngineRegistry:
         'piotroski': PiotroskiEngine(),
         'portfolio': PortfolioAnalyticsEngine(),
         'screening': ScreeningEngine(),
+        'ratio_analysis': RatioAnalysisEngine(),
     }
     
     @classmethod
