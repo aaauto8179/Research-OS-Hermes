@@ -21,6 +21,13 @@ This document contains detailed specifications for each individual financial too
 13. [GRWTH Pipeline Tracker](#13-grwth-pipeline-tracker)
 14. [Tasks & Time Tracker](#14-tasks--time-tracker)
 15. [Document Intelligence Hub](#15-document-intelligence-hub)
+16. [Ratio Analysis Tool](#16-ratio-analysis-tool)
+17. [Common Size Statement Tool](#17-common-size-statement-tool)
+18. [Turnaround Indicator Tool](#18-turnaround-indicator-tool)
+19. [Hedging Mechanism Tool](#19-hedging-mechanism-tool)
+20. [Valuation Philosophy Tool](#20-valuation-philosophy-tool)
+21. [Industry Regulations Tracker](#21-industry-regulations-tracker)
+22. [Industry Cost Driver Tool](#22-industry-cost-driver-tool)
 
 ---
 
@@ -757,6 +764,455 @@ Projects revenue by segment with driver-based assumptions. Links to valuation mo
 - **Extraction**: Tables → CSV, Text → Chunks
 - **PIT Storage**: Versioned, restatement detection
 - **RAG**: Vector search + GPT-4o with citations
+
+---
+
+## 16. Ratio Analysis Tool
+
+### 16.1 Purpose
+Comprehensive ratio analysis across profitability, leverage, liquidity, efficiency, and valuation dimensions. Multi-year trend analysis with peer benchmarking.
+
+### 16.2 Ratio Categories
+
+| Category | Ratios |
+|----------|--------|
+| **Profitability** | ROE, ROCE, ROA, Net Margin, EBITDA Margin, Gross Margin, FCF Margin |
+| **Leverage** | Debt/Equity, Debt/EBITDA, Interest Coverage, Net Debt/EBITDA |
+| **Liquidity** | Current Ratio, Quick Ratio, Cash Ratio, Working Capital Cycle |
+| **Efficiency** | Asset Turnover, Inventory Turnover, Receivables Turnover, Payables Turnover |
+| **Valuation** | P/E, P/B, EV/EBITDA, EV/Sales, FCF Yield, Dividend Yield |
+| **Growth** | Revenue CAGR, EBITDA CAGR, PAT CAGR, EPS CAGR |
+
+### 16.3 Calculations
+```python
+# Key formulas
+ROE = PAT / Avg Equity
+ROCE = EBIT / (Total Assets - Current Liabilities)
+Debt_EBITDA = Net Debt / EBITDA
+Interest_Coverage = EBIT / Interest Expense
+Current_Ratio = Current Assets / Current Liabilities
+Asset_Turnover = Revenue / Avg Total Assets
+```
+
+### 16.4 UI Layout
+```
+┌─────────────────────────────────────────────────────────────┐
+│ Ratio Analysis - [SYMBOL]                                   │
+├─────────────────────────────────────────────────────────────┤
+│ PERIOD: [5Y ▼]  [Annual ▼]  [Peer Compare: ON ▼]          │
+├──────────────┬──────────────┬──────────────┬───────────────┤
+│ PROFITABILITY│ LEVERAGE     │ LIQUIDITY    │ EFFICIENCY    │
+│ ROE: 22.5%   │ D/E: 0.45    │ Current: 1.8 │ Asset T/O: 1.2│
+│ ROCE: 28.1%  │ D/EBITDA: 1.2│ Quick: 1.2   │ Inv T/O: 6.5  │
+│ Margin: 15.2%│ Int Cov: 8.5 │ Cash: 0.8    │ Rec T/O: 4.2  │
+├──────────────┼──────────────┼──────────────┼───────────────┤
+│ VALUATION    │ GROWTH (5Y)  │ PEER RANK    │ TREND CHART   │
+│ P/E: 28.5    │ Rev: 15.2%   │ ROE: 75th %  │ [Sparkline]   │
+│ EV/EBITDA: 18│ EBITDA: 18.5%│ ROCE: 82nd % │ [5Y trend]    │
+│ P/B: 4.2     │ PAT: 22.1%   │ D/E: 35th %  │               │
+└──────────────┴──────────────┴──────────────┴───────────────┘
+```
+
+### 16.5 Peer Benchmarking
+- Percentile rank for each ratio within sector
+- Color coding: Green (top quartile), Yellow (middle), Red (bottom quartile)
+- Sector median and best-in-class reference lines
+
+---
+
+## 17. Common Size Statement Tool
+
+### 17.1 Purpose
+Common-size financial statements (vertical analysis) where every line item is expressed as a percentage of a base figure (Revenue for P&L, Total Assets for Balance Sheet). Enables cross-company and cross-period comparison regardless of scale.
+
+### 17.2 Statement Types
+
+| Statement | Base | Key Outputs |
+|-----------|------|-------------|
+| **P&L** | Revenue (100%) | COGS%, Gross Margin%, EBITDA%, EBIT%, PAT%, Tax% |
+| **Balance Sheet** | Total Assets (100%) | Current Assets%, Fixed Assets%, Equity%, Debt%, Liabilities% |
+| **Cash Flow** | Revenue (100%) | CFO%, CFI%, CFF%, FCF% |
+
+### 17.3 Calculations
+```python
+# P&L Common Size
+for item in pl_items:
+    common_size[item] = (item_value / revenue) * 100
+
+# Balance Sheet Common Size
+for item in bs_items:
+    common_size[item] = (item_value / total_assets) * 100
+
+# Trend: Year-over-year change in common-size %
+```
+
+### 17.4 UI Layout
+```
+┌─────────────────────────────────────────────────────────────┐
+│ Common Size Statements - [SYMBOL]                           │
+├─────────────────────────────────────────────────────────────┤
+│ STATEMENT: [P&L ▼]  PERIOD: [5Y]  FORMAT: [% ▼] [₹Cr ▼]   │
+├─────────────────────────────────────────────────────────────┤
+│ P&L COMMON SIZE (%)                                         │
+│ ┌──────────────────┬──────┬──────┬──────┬──────┬──────┬───┐ │
+│ │ Item             │ FY20 │ FY21 │ FY22 │ FY23 │ FY24 │Δ% │ │
+│ ├──────────────────┼──────┼──────┼──────┼──────┼──────┼───┤ │
+│ │ Revenue          │ 100% │ 100% │ 100% │ 100% │ 100% │ - │ │
+│ │ COGS             │ 65%  │ 63%  │ 61%  │ 59%  │ 58%  │-7%│ │
+│ │ Gross Profit     │ 35%  │ 37%  │ 39%  │ 41%  │ 42%  │+7%│ │
+│ │ EBITDA           │ 18%  │ 20%  │ 22%  │ 23%  │ 24%  │+6%│ │
+│ │ EBIT             │ 14%  │ 16%  │ 18%  │ 19%  │ 20%  │+6%│ │
+│ │ PAT              │ 8%   │ 9%   │ 10%  │ 11%  │ 12%  │+4%│ │
+│ └──────────────────┴──────┴──────┴──────┴──────┴──────┴───┘ │
+│ BALANCE SHEET COMMON SIZE (%)                               │
+│ ┌──────────────────┬──────┬──────┬──────┬──────┬──────┬───┐ │
+│ │ Current Assets   │ 45%  │ 48%  │ 50%  │ 52%  │ 53%  │+8%│ │
+│ │ Net Fixed Assets │ 55%  │ 52%  │ 50%  │ 48%  │ 47%  │-8%│ │
+│ │ Equity           │ 40%  │ 42%  │ 45%  │ 47%  │ 49%  │+9%│ │
+│ │ Total Debt       │ 30%  │ 28%  │ 25%  │ 23%  │ 22%  │-8%│ │
+│ └──────────────────┴──────┴──────┴──────┴──────┴──────┴───┘ │
+│ [Export CSV] [YoY Change Toggle] [Peer Comparison Overlay]  │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 17.5 Red Flags
+- Rising COGS% + falling Gross Margin% → margin pressure
+- Rising Debt% + falling Equity% → leverage risk
+- Falling CFO% while PAT% rising → earnings quality concern
+
+---
+
+## 18. Turnaround Indicator Tool
+
+### 18.1 Purpose
+Quantitative framework to identify potential turnaround candidates. Scores companies on catalysts, financial improvement signals, and management actions.
+
+### 18.2 Scoring Framework (0-100)
+
+| Pillar | Weight | Signals |
+|--------|--------|---------|
+| **Financial Inflection** | 35% | ROE improvement > 500bps, Margin expansion, FCF turning positive |
+| **Balance Sheet Repair** | 25% | Debt reduction > 20%, Interest coverage > 3x, Asset monetization |
+| **Operational Catalysts** | 20% | New capacity, Product launch, Market share gains, Cost program |
+| **Management Quality** | 10% | Promoter buying, Credible guidance, Capital allocation discipline |
+| **Valuation Support** | 10% | P/B < 1, EV/EBITDA < sector median, Dividend yield > 2% |
+
+### 18.3 Signal Detection
+```python
+signals = {
+    "roe_improvement": (roe_t - roe_t_1) > 5,
+    "margin_expansion": (ebitda_margin_t - ebitda_margin_t_1) > 2,
+    "debt_reduction": (debt_t / debt_t_1) < 0.8,
+    "fcf_turn_positive": fcf_t > 0 and fcf_t_1 < 0,
+    "promoter_buying": promoter_holding_t > promoter_holding_t_1,
+    "capex_completion": capex_completed_flag,
+}
+```
+
+### 18.4 UI Layout
+```
+┌─────────────────────────────────────────────────────────────┐
+│ Turnaround Indicator - [SYMBOL]                             │
+├─────────────────────────────────────────────────────────────┤
+│ SCORE: 72/100  │  Status: 🟡 EARLY STAGE TURNAROUND        │
+├─────────────────────────────────────────────────────────────┤
+│ PILLAR BREAKDOWN                  │ KEY SIGNALS           │
+│ ┌────────────────────────────────┐│ ┌────────────────────┐│
+│ │ Financial Inflection: 28/35  ██││ ✅ ROE +620bps YoY   ││
+│ │ Balance Sheet Repair: 18/25 ███││ ✅ Debt -22% YoY     ││
+│ │ Operational Catalysts: 15/20 ██││ ✅ FCF Turned +ve    ││
+│ │ Management Quality: 8/10   ████││ ✅ Promoter Buying   ││
+│ │ Valuation Support: 3/10    ███ ││ ❌ P/B > 1           ││
+│ └────────────────────────────────┘│ ⚠️ EV/EBITDA High    ││
+│ WEIGHTED TOTAL: 72/100            └────────────────────┘│
+├─────────────────────────────────────────────────────────────┤
+│ TIMELINE                                                     │
+│ Q4FY23 ──●──●──●──●──●── Q4FY24                             │
+│          Debt  FCF  ROE  Margin  Promoter                   │
+│          Red   Red  Red  Red     Red                         │
+│                             Green  Green                     │
+│ [Deep Dive] [Add to Watchlist] [Set Alert]                  │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 18.5 Alert Rules
+- Score > 70 + 2+ green signals → "Turnaround Watch"
+- Score > 80 + FCF positive → "High Conviction Turnaround"
+- Score drops > 15 points → "Turnaround Risk" alert
+
+---
+
+## 19. Hedging Mechanism Tool
+
+### 19.1 Purpose
+Portfolio-level and single-stock hedging strategies. Calculate optimal hedge ratios, cost of carry, and downside protection scenarios.
+
+### 19.1 Strategies
+
+| Strategy | Use Case | Instruments |
+|----------|----------|-------------|
+| **Protective Put** | Single stock downside | Long Put (OTM 5-10%) |
+| **Collar** | Hold with capped upside | Long Put + Short Call |
+| **Index Hedge** | Portfolio beta hedge | Nifty Futures / Put Spread |
+| **Sector Hedge** | Sector concentration | Sector ETF Short / Put |
+| **Pairs Hedge** | Relative value | Long/Short peer pair |
+
+### 19.2 Calculations
+```python
+# Optimal Hedge Ratio (Minimum Variance)
+h* = ρ × (σ_stock / σ_index) × (Value_stock / Value_index)
+
+# Protective Put Cost
+put_cost = Put_Premium × Lot_Size × Qty
+
+# Collar Payoff
+max_loss = (Stock_Price - Put_Strike) + Put_Premium
+max_gain = (Call_Strike - Stock_Price) - Call_Premium
+
+# Cost of Carry (Futures)
+fair_future = Spot × (1 + r × T/365) - Div_Yield
+```
+
+### 19.3 UI Layout
+```
+┌─────────────────────────────────────────────────────────────┐
+│ Hedging Mechanism - [SYMBOL / PORTFOLIO]                    │
+├─────────────────────────────────────────────────────────────┤
+│ HEDGE TYPE: [Protective Put ▼]  PORTFOLIO BETA: 1.15       │
+├─────────────────────────────────────────────────────────────┤
+│ SINGLE STOCK HEDGE              │ PORTFOLIO HEDGE          │
+│ ┌─────────────────────────────┐ │ ┌─────────────────────┐  │
+│ │ Current Price: ₹2,950       │ │ Portfolio Value: ₹2.4Cr│ │
+│ │ Put Strike: ₹2,800 (95%)   │ │ Nifty Hedge Ratio: 1.15│ │
+│ │ Premium: ₹45 (1.5%)        │ │ Contracts: 12 lots     │ │
+│ │ Cost: ₹6,750                │ │ Cost: ₹18,000         │ │
+│ │ Max Loss: ₹150 (5.1%)      │ │ Max Portfolio DD: -8%  │ │
+│ │ Breakeven: ₹2,845          │ │ Hedge Effectiveness: 85%│ │
+│ └─────────────────────────────┘ │ ┌─────────────────────┐  │
+│ PAYOFF CHART                    │ │ SCENARIO ANALYSIS   │  │
+│ ┌─────────────────────────────┐ │ │ Nifty -10%: +₹2.1L  │  │
+│ │ P&L                         │ │ │ Nifty -5%:  +₹0.9L  │  │
+│ │     ▲                       │ │ │ Flat:     -₹0.2L   │  │
+│ │    / \                      │ │ │ Nifty +5%: -₹1.1L  │  │
+│ │   /   \                     │ │ │ Nifty +10%: -₹2.3L │  │
+│ │  /     \_______             │ │ └─────────────────────┘  │
+│ └─────────────────────────────┘ └─────────────────────────┘ │
+│ [Execute Hedge] [Monitor] [Adjust Strikes]                  │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 19.4 Risk Metrics
+- **Hedge Ratio Effectiveness**: R² of hedged vs unhedged returns
+- **Cost as % of Portfolio**: Annualized hedging cost
+- **Tail Risk Reduction**: VaR improvement at 95%/99%
+
+---
+
+## 20. Valuation Philosophy Tool
+
+### 20.1 Purpose
+Structured framework to document and stress-test the analyst's valuation thesis. Forces explicit assumptions, identifies key value drivers, and enables scenario analysis.
+
+### 20.2 Framework Components
+
+| Component | Description |
+|-----------|-------------|
+| **Investment Thesis** | 2-3 sentence core thesis |
+| **Key Value Drivers** | 3-5 factors that drive >80% of value |
+| **Bear/Base/Bull Cases** | Explicit assumptions per case |
+| **Margin of Safety** | Required discount to base case |
+| **Catalysts & Timeline** | Events that close value gap |
+| **Kill Criteria** | Conditions that invalidate thesis |
+
+### 20.3 Scenario Matrix
+```json
+{
+  "bear": {
+    "probability": 0.25,
+    "revenue_cagr": 5,
+    "ebitda_margin": 18,
+    "wacc": 13,
+    "terminal_growth": 3,
+    "fair_value": 850
+  },
+  "base": {
+    "probability": 0.50,
+    "revenue_cagr": 12,
+    "ebitda_margin": 22,
+    "wacc": 11,
+    "terminal_growth": 4,
+    "fair_value": 1250
+  },
+  "bull": {
+    "probability": 0.25,
+    "revenue_cagr": 18,
+    "ebitda_margin": 25,
+    "wacc": 10,
+    "terminal_growth": 5,
+    "fair_value": 1850
+  }
+}
+```
+
+### 20.4 UI Layout
+```
+┌─────────────────────────────────────────────────────────────┐
+│ Valuation Philosophy - [SYMBOL]                             │
+├─────────────────────────────────────────────────────────────┤
+│ THESIS: "Market leader in structural growth market,         │
+│         pricing power + operating leverage = 25% EPS CAGR"  │
+├─────────────────────────────────────────────────────────────┤
+│ KEY VALUE DRIVERS (80% of value)                           │
+│ 1. Volume growth in core segment (35%)                     │
+│ 2. Margin expansion from mix shift (25%)                   │
+│ 3. FCF conversion > 80% (20%)                              │
+│ 4. Capital allocation optionality (20%)                    │
+├─────────────────────────────────────────────────────────────┤
+│ SCENARIO ANALYSIS                      │ EXPECTED VALUE    │
+│ ┌────────┬──────────────────────────┐ │ EV = Σ(P × FV)     │
+│ │ Case   │ FV   │ Prob │ Key Deltas │ │ = 0.25×850         │
+│ ├────────┼──────┼──────┼────────────┤ │    +0.50×1250      │
+│ │ Bear   │ 850  │ 25%  │ Rev -40%,  │ │    +0.25×1850      │
+│ │        │      │      │ Margin -4% │ │ = ₹1,238            │
+│ │ Base   │ 1250 │ 50%  │ As guided  │ │                     │
+│ │ Bull   │ 1850 │ 25% │ Rev +30%,  │ │ MOS vs CMP: +38%   │
+│ │        │      │      │ Margin +3% │ │                     │
+│ └────────┴──────┴──────┴────────────┘ └─────────────────────┘
+├─────────────────────────────────────────────────────────────┤
+│ CATALYSTS & TIMELINE                │ KILL CRITERIA        │
+│ Q2FY25: Capacity online (Mar 25)   │ ✗ Volume decline 2Q  │
+│ Q3FY25: New product launch (Jun 25)│ ✗ Margin < 18%       │
+│ Q4FY25: FCF inflection (Sep 25)    │ ✗ Capex overrun >20% │
+│                                     │ ✗ Promoter selling   │
+├─────────────────────────────────────────────────────────────┤
+│ SENSITIVITY TO KEY DRIVERS                              │
+│ Driver      │ -10%   │ -5%   │ Base │ +5%  │ +10%  │
+│ Volume      │ 1,080  │ 1,165 │ 1,250│ 1,335│ 1,420 │
+│ Margin      │ 1,120  │ 1,185 │ 1,250│ 1,315│ 1,380 │
+│ WACC        │ 1,420  │ 1,330 │ 1,250│ 1,175│ 1,105 │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 21. Industry Regulations Tracker
+
+### 21.1 Purpose
+Track regulatory changes, policy announcements, and compliance requirements affecting an industry. Maps regulation to company impact.
+
+### 21.2 Data Model
+
+| Field | Type |
+|-------|------|
+| Regulation Name | string |
+| Authority | enum: Central/State/Regulator/Court |
+| Status | enum: Draft/Enacted/Amended/Repealed |
+| Effective Date | date |
+| Industry Impact | enum: High/Medium/Low |
+| Company Impact | enum: Positive/Neutral/Negative |
+| Key Provisions | text |
+| Compliance Deadline | date |
+| Source Link | url |
+
+### 21.3 UI Layout
+```
+┌─────────────────────────────────────────────────────────────┐
+│ Industry Regulations - [INDUSTRY]                           │
+├─────────────────────────────────────────────────────────────┤
+│ FILTERS: [Status ▼] [Authority ▼] [Impact ▼] [Search...]  │
+├─────────────────────────────────────────────────────────────┤
+│ REGULATION TIMELINE                                         │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │ Date       │ Regulation              │ Auth │ Impact    │ │
+│ ├────────────┼─────────────────────────┼──────┼───────────┤ │
+│ │ 2024-11-15 │ New Emission Norms BS7  │ MoRTH│ High ⚠️   │ │
+│ │ 2024-10-20 │ PLI Scheme 2.0 Auto     │ DPIIT│ Pos ✅    │ │
+│ │ 2024-09-01 │ Scrappage Policy        │ MoRTH│ Med ⚠️    │ │
+│ │ 2024-07-15 │ FAME III Subsidies      │ DHI  │ Pos ✅    │ │
+│ └────────────┴─────────────────────────┴──────┴───────────┘ │
+├─────────────────────────────────────────────────────────────┤
+│ COMPANY IMPACT MATRIX                                       │
+│ ┌────────────┬─────────┬─────────┬─────────┬─────────┐     │
+│ │ Company    │ BS7     │ PLI 2.0 │ Scrap   │ FAME III│     │
+│ ├────────────┼─────────┼─────────┼─────────┼─────────┤     │
+│ │ TATAMOTORS │ ⚠️ Cost │ ✅ Ben   │ ✅ Benef│ ✅ Benef│     │
+│ │ M&M        │ ⚠️ Cost │ ✅ Ben   │ ⚠️ Mix  │ ✅ Benef│     │
+│ │ BAJAJ AUTO │ ⚠️ Cost │ ⚠️ 2W    │ ⚠️ Mix  │ ⚠️ 2W   │     │
+│ │ TVS MOTOR  │ ⚠️ Cost │ ⚠️ 2W    │ ⚠️ Mix  │ ⚠️ 2W   │     │
+│ └────────────┴─────────┴─────────┴─────────┴─────────┘     │
+│ [Add Regulation] [Set Alerts] [Export]                      │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 21.4 Alert Rules
+- New draft regulation → "Regulatory Watch"
+- Status change to Enacted → "Compliance Deadline Alert" (90/60/30 days)
+- Negative impact on watchlist company → "Portfolio Risk Alert"
+
+---
+
+## 22. Industry Cost Driver Tool
+
+### 22.1 Purpose
+Decompose industry cost structure by major input categories. Track cost inflation, substitution trends, and company-level cost advantages.
+
+### 22.1 Cost Categories
+
+| Category | Examples | Tracking |
+|----------|----------|----------|
+| **Raw Materials** | Steel, Aluminum, Crude, Chemicals | LME/MCX indices, Contract vs Spot |
+| **Energy** | Power, Fuel, Gas | Exchange rates, Policy rates |
+| **Logistics** | Freight, Rail, Port charges | Diesel index, Toll rates |
+| **Labor** | Wages, Contractor costs | Minimum wage, PLFS data |
+| **Finance** | Interest, Working capital | MCLR, Repo rate, T-bill |
+| **Regulatory** | Duties, Taxes, Cess | Budget announcements |
+
+### 22.2 Calculations
+```python
+# Cost Share
+cost_share = category_cost / total_cogs
+
+# Cost Inflation YoY
+cost_inflation = (cost_t / cost_t_1 - 1) * 100
+
+# Pass-through Ability
+pass_through = (price_change / cost_change) * 100
+
+# Company vs Industry
+cost_advantage = industry_avg_cost - company_cost
+```
+
+### 22.3 UI Layout
+```
+┌─────────────────────────────────────────────────────────────┐
+│ Industry Cost Drivers - [INDUSTRY]                          │
+├─────────────────────────────────────────────────────────────┤
+│ PERIOD: [FY24]  VIEW: [Share % ▼] [Inflation ▼] [Trend ▼] │
+├─────────────────────────────────────────────────────────────┤
+│ COST STRUCTURE (Industry Avg)           │ COMPANY COMPARISON │
+│ ┌──────────────┬──────┬──────┬────────┐ │ ┌────────────────┐ │
+│ │ Category     │ Share│ YoY% │ Trend │ │ │ Company │ Cost% │ │
+│ ├──────────────┼──────┼──────┼────────┤ │ ├────────────────┤ │
+│ │ Raw Material │ 55%  │ +12% │ ████▲  │ │ │ TATAMOTORS│ 52% │ │
+│ │ Steel        │ 28%  │ +15% │ ████▲  │ │ │ M&M       │ 58% │ │
+│ │ Aluminum     │ 12%  │ +8%  │ ██▲    │ │ │ BAJAJ     │ 48% │ │
+│ │ Chemicals    │ 15%  │ +10% │ ███▲   │ │ │ Industry  │ 55% │ │
+│ │ Energy       │ 18%  │ +5%  │ ██▲    │ │ └────────────────┘ │
+│ │ Power        │ 10%  │ +3%  │ █▲     │ │ PASS-THROUGH     │ │
+│ │ Fuel         │ 8%   │ +8%  │ ██▲    │ │ Steel: 85%       │ │
+│ │ Logistics    │ 12%  │ +6%  │ ██▲    │ │ Aluminum: 70%    │ │
+│ │ Labor        │ 8%   │ +7%  │ ██▲    │ │ Chemicals: 60%   │ │
+│ │ Finance      │ 5%   │ -2%  │ █▼     │ │ Energy: 40%      │ │
+│ │ Other        │ 2%   │ +3%  │ █▲     │ └──────────────────┘ │
+│ └──────────────┴──────┴──────┴────────┘ │ COST ADVANTAGE   │
+│ [Input Price Indices] [Substitution Tracker] │ TATA vs Ind: -3%│
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 22.4 Substitution Tracker
+- Alternative materials (e.g., Aluminum → Composites)
+- Process changes (e.g., Coal → Gas)
+- Technology adoption (e.g., EV → Lower maintenance)
 
 ---
 
