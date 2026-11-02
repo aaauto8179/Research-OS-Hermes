@@ -6,14 +6,14 @@ import { WidgetRenderer } from "@/components/widgets/WidgetRegistry";
 const TAB_CONTENT: Record<string, string[]> = {
   overview: ["kpi-cards", "financial-charts", "valuation-summary", "risk-assessment"],
   story: ["financial-charts", "valuation-summary", "peer-comparison"],
-  management: ["ownership-analysis", "catalyst-tracker"],
-  governance: ["risk-assessment", "checklist"],
-  financials: ["financial-charts", "kpi-cards", "ratio-analysis"],
-  valuation: ["valuation-summary"],
-  risk: ["risk-assessment", "technical-analysis"],
-  sme: ["ownership-analysis", "custom-text"],
-  "working-capital": ["financial-charts", "kpi-cards"],
-  downsides: ["risk-assessment", "checklist"],
+  management: ["ownership-analysis", "catalyst-tracker", "concall-consistency"],
+  governance: ["risk-assessment", "checklist", "risk-score"],
+  financials: ["financial-charts", "kpi-cards", "ratio-analysis", "common-size", "revenue-projection"],
+  valuation: ["valuation-summary", "revenue-projection"],
+  risk: ["risk-assessment", "technical-analysis", "risk-score", "hedging-mechanism"],
+  sme: ["ownership-analysis", "custom-text", "turnaround-indicator"],
+  "working-capital": ["financial-charts", "kpi-cards", "common-size"],
+  downsides: ["risk-assessment", "checklist", "hedging-mechanism"],
 };
 
 export default function CompanyPage() {
