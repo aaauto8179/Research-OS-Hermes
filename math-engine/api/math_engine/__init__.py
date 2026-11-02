@@ -888,12 +888,16 @@ class BeneishEngine(DeterministicCalculator):
     """Beneish M-Score for Earnings Manipulation Detection"""
     
     def calculate(self, inputs: BeneishInputs) -> BeneishOutputs:
-        # M = -4.84 + 0.920*DSRI + 0.528*GMI + 0.404*AQI + 0.892*SGI 
-        #     + 0.115*DEPI - 0.172*SGAI + 4.037*TATA + 0.0327*LVGI
-        
+        # M = -4.84 + 0.920*DSRI + 0.528*GMI + 0.404*AQI + 0.892*SGI
+        #     + 0.115*DEPI - 0.172*SGAI + 4.679*TATA - 0.327*LVGI
+
+        # GMI clamping: if current Gross Margin <= 0, GMI becomes negative,
+        # falsely lowering M-Score. Clamp GMI in [0.1, 5.0].
+        gmi_clamped = max(0.1, min(5.0, inputs.gmi))
+
         components = {
             'dsri': 0.920 * inputs.dsri,
-            'gmi': 0.528 * inputs.gmi,
+            'gmi': 0.528 * gmi_clamped,
             'aqi': 0.404 * inputs.aqi,
             'sgi': 0.892 * inputs.sgi,
             'depi': 0.115 * inputs.depi,
@@ -1248,83 +1252,183 @@ class ScreeningResult:
     calculation_timestamp: str = ""
 
 class ScreeningEngine(DeterministicCalculator):
-    """Deterministic Multi-Factor Screening Engine"""
-    
+    """Deterministic Multi-Factor Screening Engine with percentile-based scoring."""
+
+    # Factors where LOWER is better (need percentile inversion)
+    LOWER_BETTER_FACTORS = {
+        'pe', 'ev_ebitda', 'pb', 'debt_ebitda', 'beneish_m_score', 
+        'dist_from_52w_high'  # closer to 52w high = less upside
+    }
+
+    def _percentile_rank(self, value: float, all_values: List[float], lower_is_better: bool = False) -> float:
+        """Percentile rank: % of universe with value <= this company's value.
+        For lower_is_better: invert (100 - percentile)."""
+        valid = [v for v in all_values if v is not None and not np.isnan(v) and v != np.inf and v != -np.inf]
+        if not valid:
+            return 50.0
+        rank = sum(1 for v in valid if v <= value) / len(valid) * 100
+        if lower_is_better:
+            rank = 100 - rank
+        return round(rank, 1)
+
     def calculate(self, universe: List[Dict], criteria: ScreeningCriteria) -> List[ScreeningResult]:
+        if not universe:
+            return []
+
+        # Pre-compute all factor values across universe for percentile ranking
+        factor_values = {}
+        active_factors = []
+
+        # Collect all factor values present in criteria
+        if criteria.pe_max is not None:
+            active_factors.append(('pe', 'pe', True))  # lower_is_better
+        if criteria.ev_ebitda_max is not None:
+            active_factors.append(('ev_ebitda', 'ev_ebitda', True))
+        if criteria.pb_max is not None:
+            active_factors.append(('pb', 'pb', True))
+        if criteria.fcf_yield_min is not None:
+            active_factors.append(('fcf_yield', 'fcf_yield', False))  # higher better
+        if criteria.roe_min is not None:
+            active_factors.append(('roe', 'roe', False))
+        if criteria.roce_min is not None:
+            active_factors.append(('roce', 'roce', False))
+        if criteria.roic_min is not None:
+            active_factors.append(('roic', 'roic', False))
+        if criteria.debt_ebitda_max is not None:
+            active_factors.append(('debt_ebitda', 'debt_ebitda', True))
+        if criteria.ocf_ebitda_min is not None:
+            active_factors.append(('ocf_ebitda', 'ocf_ebitda', False))
+        if criteria.dist_from_52w_high_max is not None:
+            active_factors.append(('dist_from_52w_high', 'dist_from_52w_high', True))
+        if criteria.dma_200_spread_min is not None:
+            active_factors.append(('dma_200_spread', 'dma_200_spread', False))
+        if criteria.rel_strength_3m_min is not None:
+            active_factors.append(('rel_strength_3m', 'rel_strength_3m', False))
+        if criteria.beneish_max is not None:
+            active_factors.append(('beneish_m_score', 'beneish_m_score', True))
+        if criteria.altman_z_min is not None:
+            active_factors.append(('altman_z', 'altman_z', False))
+        if criteria.piotroski_min is not None:
+            active_factors.append(('piotroski_f_score', 'piotroski_f_score', False))
+
+        # Build factor value arrays
+        for factor_key, company_key, _ in active_factors:
+            factor_values[factor_key] = [c.get(company_key, np.nan) for c in universe]
+
         results = []
-        
-        for company in universe:
+
+        for idx, company in enumerate(universe):
             passed = {}
             metrics = {}
-            score_components = []
-            
-            # Valuation checks
+            factor_percentiles = {}
+
+            symbol = company.get('symbol', '')
+            name = company.get('name', '')
+
+            # Loss-making detection - only if pat explicitly provided and negative
+            is_loss_making = False
+            pe = company.get('pe', np.nan)
+            if not np.isnan(pe) and pe <= 0:
+                is_loss_making = True
+            # Only flag as loss-making if pat is explicitly provided and negative
+            if 'pat' in company:
+                pat = company.get('pat')
+                if pat is not None and pat <= 0:
+                    is_loss_making = True
+
+            # Valuation checks with percentile scoring
             if criteria.pe_max is not None:
-                pe = company.get('pe', np.inf)
-                passed['pe'] = pe <= criteria.pe_max if not np.isnan(pe) else False
-                metrics['pe'] = pe
-                if passed['pe']:
-                    score_components.append(10)
-            
+                val = company.get('pe', np.nan)
+                metrics['pe'] = val
+                if is_loss_making:
+                    passed['pe'] = False
+                    factor_percentiles['pe'] = 0.0  # Loss-maker gets 0 percentile
+                else:
+                    passed['pe'] = val <= criteria.pe_max if not np.isnan(val) else False
+                    factor_percentiles['pe'] = self._percentile_rank(val, factor_values['pe'], lower_is_better=True)
+
             if criteria.ev_ebitda_max is not None:
-                ev_ebitda = company.get('ev_ebitda', np.inf)
-                passed['ev_ebitda'] = ev_ebitda <= criteria.ev_ebitda_max if not np.isnan(ev_ebitda) else False
-                metrics['ev_ebitda'] = ev_ebitda
-                if passed['ev_ebitda']:
-                    score_components.append(10)
-            
+                val = company.get('ev_ebitda', np.nan)
+                metrics['ev_ebitda'] = val
+                if is_loss_making and company.get('ebitda', 0) <= 0:
+                    passed['ev_ebitda'] = False
+                    factor_percentiles['ev_ebitda'] = 0.0
+                else:
+                    passed['ev_ebitda'] = val <= criteria.ev_ebitda_max if not np.isnan(val) else False
+                    factor_percentiles['ev_ebitda'] = self._percentile_rank(val, factor_values['ev_ebitda'], lower_is_better=True)
+
+            if criteria.pb_max is not None:
+                val = company.get('pb', np.nan)
+                metrics['pb'] = val
+                if company.get('total_equity', 0) <= 0:
+                    passed['pb'] = False
+                    factor_percentiles['pb'] = 0.0
+                else:
+                    passed['pb'] = val <= criteria.pb_max if not np.isnan(val) else False
+                    factor_percentiles['pb'] = self._percentile_rank(val, factor_values['pb'], lower_is_better=True)
+
+            # FCF Yield = (CFO - Capex) / Market Cap — NOT CFO/MarketCap
             if criteria.fcf_yield_min is not None:
-                fcf_yield = company.get('fcf_yield', -np.inf)
-                passed['fcf_yield'] = fcf_yield >= criteria.fcf_yield_min if not np.isnan(fcf_yield) else False
+                cfo = company.get('cfo', np.nan)
+                capex = company.get('capex', np.nan)
+                mc = company.get('market_cap', np.nan)
+                if not np.isnan(cfo) and not np.isnan(capex) and mc and mc > 0:
+                    fcf_yield = (cfo - capex) / mc
+                else:
+                    fcf_yield = company.get('fcf_yield', np.nan)  # fallback
                 metrics['fcf_yield'] = fcf_yield
-                if passed['fcf_yield']:
-                    score_components.append(10)
-            
+                passed['fcf_yield'] = fcf_yield >= criteria.fcf_yield_min if not np.isnan(fcf_yield) else False
+                factor_percentiles['fcf_yield'] = self._percentile_rank(fcf_yield, factor_values['fcf_yield'], lower_is_better=False)
+
             # Quality checks
-            if criteria.roe_min is not None:
-                roe = company.get('roe', -np.inf)
-                passed['roe'] = roe >= criteria.roe_min if not np.isnan(roe) else False
-                metrics['roe'] = roe
-                if passed['roe']:
-                    score_components.append(10)
-            
-            if criteria.roce_min is not None:
-                roce = company.get('roce', -np.inf)
-                passed['roce'] = roce >= criteria.roce_min if not np.isnan(roce) else False
-                metrics['roce'] = roce
-                if passed['roce']:
-                    score_components.append(10)
-            
-            if criteria.debt_ebitda_max is not None:
-                debt_ebitda = company.get('debt_ebitda', np.inf)
-                passed['debt_ebitda'] = debt_ebitda <= criteria.debt_ebitda_max if not np.isnan(debt_ebitda) else False
-                metrics['debt_ebitda'] = debt_ebitda
-                if passed['debt_ebitda']:
-                    score_components.append(10)
-            
+            for factor_key, company_key, lower_better in [('roe', 'roe', False), ('roce', 'roce', False), 
+                                                            ('roic', 'roic', False), ('debt_ebitda', 'debt_ebitda', True),
+                                                            ('ocf_ebitda', 'ocf_ebitda', False)]:
+                criterion_attr = f'{factor_key}_min' if not lower_better else f'{factor_key}_max'
+                criterion_val = getattr(criteria, criterion_attr, None)
+                if criterion_val is not None:
+                    val = company.get(company_key, np.nan)
+                    metrics[factor_key] = val
+                    if not lower_better:
+                        passed[factor_key] = val >= criterion_val if not np.isnan(val) else False
+                    else:
+                        passed[factor_key] = val <= criterion_val if not np.isnan(val) else False
+                    factor_percentiles[factor_key] = self._percentile_rank(val, factor_values[factor_key], lower_is_better=lower_better)
+
             # Momentum checks
-            if criteria.dist_from_52w_high_max is not None:
-                dist = company.get('dist_from_52w_high', np.inf)
-                passed['dist_52w'] = dist <= criteria.dist_from_52w_high_max if not np.isnan(dist) else False
-                metrics['dist_from_52w_high'] = dist
-                if passed['dist_52w']:
-                    score_components.append(5)
-            
+            for factor_key, company_key, lower_better in [('dist_from_52w_high', 'dist_from_52w_high', True),
+                                                            ('dma_200_spread', 'dma_200_spread', False),
+                                                            ('rel_strength_3m', 'rel_strength_3m', False)]:
+                criterion_attr = f'{factor_key}_min' if not lower_better else f'{factor_key}_max'
+                criterion_val = getattr(criteria, criterion_attr, None)
+                if criterion_val is not None:
+                    val = company.get(company_key, np.nan)
+                    metrics[factor_key] = val
+                    if not lower_better:
+                        passed[factor_key] = val >= criterion_val if not np.isnan(val) else False
+                    else:
+                        passed[factor_key] = val <= criterion_val if not np.isnan(val) else False
+                    factor_percentiles[factor_key] = self._percentile_rank(val, factor_values[factor_key], lower_is_better=lower_better)
+
             # Forensic checks
             if criteria.beneish_max is not None:
-                beneish = company.get('beneish_m_score', np.inf)
-                passed['beneish'] = beneish <= criteria.beneish_max if not np.isnan(beneish) else False
-                metrics['beneish_m_score'] = beneish
-                if passed['beneish']:
-                    score_components.append(15)
-            
+                val = company.get('beneish_m_score', np.nan)
+                metrics['beneish_m_score'] = val
+                passed['beneish'] = val <= criteria.beneish_max if not np.isnan(val) else False
+                factor_percentiles['beneish_m_score'] = self._percentile_rank(val, factor_values['beneish_m_score'], lower_is_better=True)
+
+            if criteria.altman_z_min is not None:
+                val = company.get('altman_z', np.nan)
+                metrics['altman_z'] = val
+                passed['altman_z'] = val >= criteria.altman_z_min if not np.isnan(val) else False
+                factor_percentiles['altman_z'] = self._percentile_rank(val, factor_values['altman_z'], lower_is_better=False)
+
             if criteria.piotroski_min is not None:
-                piotroski = company.get('piotroski_f_score', -1)
-                passed['piotroski'] = piotroski >= criteria.piotroski_min
-                metrics['piotroski_f_score'] = piotroski
-                if passed['piotroski']:
-                    score_components.append(15)
-            
+                val = company.get('piotroski_f_score', -1)
+                metrics['piotroski_f_score'] = val
+                passed['piotroski'] = val >= criteria.piotroski_min
+                factor_percentiles['piotroski_f_score'] = self._percentile_rank(val, factor_values['piotroski_f_score'], lower_is_better=False)
+
             # Market cap filter
             if criteria.market_cap_min is not None or criteria.market_cap_max is not None:
                 mc = company.get('market_cap', 0)
@@ -1332,34 +1436,46 @@ class ScreeningEngine(DeterministicCalculator):
                 max_ok = mc <= criteria.market_cap_max if criteria.market_cap_max else True
                 passed['market_cap'] = min_ok and max_ok
                 metrics['market_cap'] = mc
-            
+
             if criteria.market_cap_category:
                 cat = company.get('market_cap_category', '')
                 passed['category'] = cat in criteria.market_cap_category
                 metrics['market_cap_category'] = cat
-            
-            # Composite score (0-100)
-            max_possible = len([k for k in ['pe', 'ev_ebitda', 'fcf_yield', 'roe', 'roce', 'debt_ebitda', 'dist_52w', 'beneish', 'piotroski'] 
-                              if getattr(criteria, k + '_max' if 'max' in k else k + '_min' if 'min' in k else k, None) is not None])
-            # Simplified: normalize score_components sum to 100
-            score = min(100, sum(score_components) * (100 / max(1, max_possible * 10)))
-            
+
+            # Composite score: weighted average of factor percentiles
+            # Weight configuration (can be customized)
+            weights = {
+                'pe': 10, 'ev_ebitda': 10, 'pb': 5, 'fcf_yield': 10,
+                'roe': 10, 'roce': 10, 'roic': 5, 'debt_ebitda': 10, 'ocf_ebitda': 5,
+                'dist_from_52w_high': 5, 'dma_200_spread': 5, 'rel_strength_3m': 5,
+                'beneish_m_score': 10, 'altman_z': 5, 'piotroski_f_score': 10,
+            }
+            # Only use weights for active factors
+            active_weights = {k: v for k, v in weights.items() if k in factor_percentiles}
+            total_weight = sum(active_weights.values()) or 1
+            composite_score = sum(factor_percentiles[k] * active_weights[k] for k in factor_percentiles) / total_weight
+            composite_score = min(100, max(0, composite_score))
+
+            # Apply loss-maker penalty (hard cap at 30)
+            if is_loss_making:
+                composite_score = min(composite_score, 30.0)
+
             results.append(ScreeningResult(
-                symbol=company.get('symbol', ''),
-                name=company.get('name', ''),
-                score=score,
+                symbol=symbol,
+                name=name,
+                score=round(composite_score, 1),
                 passed_filters=passed,
                 metrics=metrics,
-                rank=0,  # Will be set after sorting
-                inputs_hash="",  # Individual company hash not computed here
+                rank=0,
+                inputs_hash="",
                 calculation_timestamp=datetime.now().isoformat()
             ))
-        
-        # Sort by score descending and assign ranks
+
+        # Sort by composite score descending and assign ranks
         results.sort(key=lambda x: x.score, reverse=True)
         for i, r in enumerate(results):
             r.rank = i + 1
-        
+
         return results
 
 # ============================================================
@@ -1747,6 +1863,635 @@ class RatioAnalysisEngine(DeterministicCalculator):
             calculation_timestamp=datetime.now().isoformat()
         )
 
+# ============================================================
+# TURNOVER ENGINE (Turnaround Indicator)
+# ============================================================
+
+@dataclass
+class TurnaroundInputs:
+    symbol: str
+    roe_t: float = 0.0
+    roe_t_1: float = 0.0
+    debt_t: float = 0.0
+    debt_t_1: float = 0.0
+    cfo_positive: bool = False
+    operating_margin_t: float = 0.0
+    operating_margin_t_1: float = 0.0
+    ebitda_t: float = 0.0
+    ebitda_t_1: float = 0.0
+    interest_coverage_t: float = 0.0
+    interest_coverage_t_1: float = 0.0
+    asset_turnover_t: float = 0.0
+    asset_turnover_t_1: float = 0.0
+    share_count_t: float = 0.0
+    share_count_t_1: float = 0.0
+    split_factor: float = 1.0  # Corporate action split/bonus normalization
+    min_debt_reduction: float = 25.0  # Minimum nominal debt reduction in Cr
+
+@dataclass
+class TurnaroundOutputs:
+    symbol: str
+    signals: Dict[str, bool]
+    turnaround_score: float  # 0-100
+    signal_count: int
+    dilution_warning: bool
+    inputs_hash: str = ""
+    calculation_timestamp: str = ""
+
+class TurnaroundEngine(DeterministicCalculator):
+    """Turnaround Indicator Engine with normalized thresholds."""
+
+    def calculate(self, inputs: TurnaroundInputs) -> TurnaroundOutputs:
+        signals = {}
+        score = 0.0
+
+        # 1. ROE Inflection: decimal threshold > 0.05 (500 bps), not > 5
+        roe_diff = inputs.roe_t - inputs.roe_t_1
+        signals['roe_inflection'] = roe_diff > 0.05
+        if signals['roe_inflection']:
+            score += 20
+
+        # 2. Debt Reduction: check zero-division, minimum nominal threshold
+        if inputs.debt_t_1 > 0:
+            debt_reduction_ratio = inputs.debt_t / inputs.debt_t_1
+            debt_reduction_nominal = inputs.debt_t_1 - inputs.debt_t
+            signals['debt_reduction'] = (debt_reduction_ratio < 0.8 and
+                                         debt_reduction_nominal >= inputs.min_debt_reduction)
+        else:
+            signals['debt_reduction'] = False
+        if signals['debt_reduction']:
+            score += 20
+
+        # 3. CFO Positive
+        signals['cfo_positive'] = inputs.cfo_positive
+        if signals['cfo_positive']:
+            score += 15
+
+        # 4. Operating Margin Improvement
+        margin_diff = inputs.operating_margin_t - inputs.operating_margin_t_1
+        signals['margin_improvement'] = margin_diff > 0.02  # 200 bps
+        if signals['margin_improvement']:
+            score += 15
+
+        # 5. EBITDA Growth
+        if inputs.ebitda_t_1 > 0:
+            ebitda_growth = (inputs.ebitda_t / inputs.ebitda_t_1) - 1
+            signals['ebitda_growth'] = ebitda_growth > 0.10  # 10%
+        else:
+            signals['ebitda_growth'] = False
+        if signals['ebitda_growth']:
+            score += 15
+
+        # 6. Interest Coverage Improvement
+        ic_diff = inputs.interest_coverage_t - inputs.interest_coverage_t_1
+        signals['interest_coverage_improvement'] = ic_diff > 0.5
+        if signals['interest_coverage_improvement']:
+            score += 10
+
+        # 7. Asset Turnover Improvement
+        at_diff = inputs.asset_turnover_t - inputs.asset_turnover_t_1
+        signals['asset_turnover_improvement'] = at_diff > 0.05
+        if signals['asset_turnover_improvement']:
+            score += 5
+
+        # IBC / NCLT Dilution Check: normalize share count by split factor
+        normalized_shares_t = inputs.share_count_t / inputs.split_factor if inputs.split_factor > 0 else inputs.share_count_t
+        normalized_shares_t_1 = inputs.share_count_t_1
+        if normalized_shares_t_1 > 0:
+            dilution_pct = (normalized_shares_t / normalized_shares_t_1 - 1) * 100
+            dilution_warning = dilution_pct > 10.0  # > 10% dilution
+        else:
+            dilution_warning = False
+
+        signal_count = sum(1 for v in signals.values() if v)
+
+        return TurnaroundOutputs(
+            symbol=inputs.symbol,
+            signals=signals,
+            turnaround_score=min(100, score),
+            signal_count=signal_count,
+            dilution_warning=dilution_warning,
+            inputs_hash=self._hash_inputs(inputs),
+            calculation_timestamp=datetime.now().isoformat()
+        )
+
+# ============================================================
+# HEDGING ENGINE
+# ============================================================
+
+@dataclass
+class HedgingInputs:
+    spot_price: float
+    call_strike: float
+    put_strike: float
+    call_premium: float
+    put_premium: float
+    risk_free_rate: float = 0.07
+    dividend_yield: float = 0.0
+    time_to_expiry_days: int = 30
+    portfolio_value: float = 0.0
+    futures_value: float = 0.0
+    hedge_ratio: float = 0.0
+    nse_lot_size: int = 1
+
+@dataclass
+class HedgingOutputs:
+    collar_max_gain: float
+    collar_max_loss: float
+    fair_future_price: float
+    hedge_lots: int
+    basis_risk: float
+    stt_cost_drag: float
+    inputs_hash: str = ""
+    calculation_timestamp: str = ""
+
+class HedgingEngine(DeterministicCalculator):
+    """Hedging Mechanism Engine with correct payoff math."""
+
+    def calculate(self, inputs: HedgingInputs) -> HedgingOutputs:
+        S0 = inputs.spot_price
+        Kc = inputs.call_strike
+        Kp = inputs.put_strike
+        C = inputs.call_premium
+        P = inputs.put_premium
+        T = inputs.time_to_expiry_days / 365.0
+        r = inputs.risk_free_rate
+        q = inputs.dividend_yield
+
+        # Collar: Max Gain = (K_call - S0) + (C - P)  [selling call RECEIVES premium +C]
+        collar_max_gain = (Kc - S0) + (C - P)
+        # Max Loss = (S0 - K_put) + (P - C)
+        collar_max_loss = (S0 - Kp) + (P - C)
+
+        # Futures Cost of Carry: F = S0 * [1 + (r - q) * T/365]
+        # Correct: percentage yield, not subtracted from rupee price
+        fair_future = S0 * (1 + (r - q) * T)
+
+        # Hedge lots: round to integer NSE lots
+        if inputs.futures_value > 0 and inputs.portfolio_value > 0:
+            raw_lots = (inputs.hedge_ratio * inputs.portfolio_value) / inputs.futures_value
+            hedge_lots = int(round(raw_lots / inputs.nse_lot_size)) * inputs.nse_lot_size
+        else:
+            hedge_lots = 0
+
+        # Basis risk (simplified: difference between spot and futures)
+        basis_risk = abs(S0 - fair_future) / S0 if S0 > 0 else 0.0
+
+        # STT cost drag: 0.02% futures, 0.1% options (simplified)
+        stt_cost_drag = 0.0002 * inputs.portfolio_value if inputs.portfolio_value > 0 else 0.0
+
+        return HedgingOutputs(
+            collar_max_gain=collar_max_gain,
+            collar_max_loss=collar_max_loss,
+            fair_future_price=fair_future,
+            hedge_lots=hedge_lots,
+            basis_risk=basis_risk,
+            stt_cost_drag=stt_cost_drag,
+            inputs_hash=self._hash_inputs(inputs),
+            calculation_timestamp=datetime.now().isoformat()
+        )
+
+# ============================================================
+# RISK SCORE ENGINE
+# ============================================================
+
+@dataclass
+class RiskScoreInputs:
+    symbol: str
+    promoter_pledge_pct: float = 0.0
+    rpt_pct_of_turnover: float = 0.0
+    auditor_type: str = "BIG4"  # BIG4, TIER2, EMPHASIS, QUALIFIED, RESIGNED
+    debt_ebitda: float = 0.0
+    interest_coverage: float = 0.0
+    current_ratio: float = 0.0
+    promoter_holding_pct: float = 0.0
+    pledged_shares_pct: float = 0.0
+    available_factors: List[str] = field(default_factory=list)
+
+@dataclass
+class RiskScoreOutputs:
+    symbol: str
+    category_scores: Dict[str, float]
+    composite_score: float  # 0-100, higher = more risk
+    risk_level: str  # LOW, MODERATE, HIGH, SEVERE
+    inputs_hash: str = ""
+    calculation_timestamp: str = ""
+
+class RiskScoreEngine(DeterministicCalculator):
+    """Risk Score Engine with SEBI LODR calibrations and transfer functions."""
+
+    def _promoter_pledge_score(self, pct: float) -> float:
+        if pct <= 5:
+            return 0.0
+        elif pct <= 20:
+            return 40.0
+        elif pct <= 50:
+            return 80.0
+        else:
+            return 100.0
+
+    def _rpt_score(self, pct: float) -> float:
+        if pct <= 10:
+            return 0.0
+        elif pct <= 25:
+            return 50.0
+        else:
+            return 100.0
+
+    def _auditor_score(self, auditor_type: str) -> float:
+        mapping = {
+            "BIG4": 0.0,
+            "TIER2": 25.0,
+            "EMPHASIS": 50.0,
+            "QUALIFIED": 80.0,
+            "RESIGNED": 100.0,
+        }
+        return mapping.get(auditor_type.upper(), 50.0)
+
+    def _leverage_score(self, debt_ebitda: float) -> float:
+        if debt_ebitda <= 1:
+            return 0.0
+        elif debt_ebitda <= 2:
+            return 25.0
+        elif debt_ebitda <= 4:
+            return 50.0
+        elif debt_ebitda <= 6:
+            return 75.0
+        else:
+            return 100.0
+
+    def _liquidity_score(self, current_ratio: float) -> float:
+        if current_ratio >= 2.0:
+            return 0.0
+        elif current_ratio >= 1.5:
+            return 25.0
+        elif current_ratio >= 1.0:
+            return 50.0
+        elif current_ratio >= 0.5:
+            return 75.0
+        else:
+            return 100.0
+
+    def calculate(self, inputs: RiskScoreInputs) -> RiskScoreOutputs:
+        category_scores = {
+            "promoter_pledge": self._promoter_pledge_score(inputs.promoter_pledge_pct),
+            "related_party_transactions": self._rpt_score(inputs.rpt_pct_of_turnover),
+            "auditor_quality": self._auditor_score(inputs.auditor_type),
+            "leverage": self._leverage_score(inputs.debt_ebitda),
+            "liquidity": self._liquidity_score(inputs.current_ratio),
+        }
+
+        # Default weights
+        weights = {
+            "promoter_pledge": 0.25,
+            "related_party_transactions": 0.20,
+            "auditor_quality": 0.20,
+            "leverage": 0.20,
+            "liquidity": 0.15,
+        }
+
+        # Dynamic weight renormalization for unavailable factors
+        if inputs.available_factors:
+            available = set(inputs.available_factors)
+            valid_weights = {k: v for k, v in weights.items() if k in available}
+            total_w = sum(valid_weights.values()) or 1.0
+            valid_weights = {k: v / total_w for k, v in valid_weights.items()}
+        else:
+            valid_weights = weights
+
+        composite = sum(category_scores[k] * valid_weights.get(k, 0) for k in category_scores)
+        composite = min(100, max(0, composite))
+
+        if composite <= 25:
+            risk_level = "LOW"
+        elif composite <= 50:
+            risk_level = "MODERATE"
+        elif composite <= 75:
+            risk_level = "HIGH"
+        else:
+            risk_level = "SEVERE"
+
+        return RiskScoreOutputs(
+            symbol=inputs.symbol,
+            category_scores=category_scores,
+            composite_score=round(composite, 1),
+            risk_level=risk_level,
+            inputs_hash=self._hash_inputs(inputs),
+            calculation_timestamp=datetime.now().isoformat()
+        )
+
+# ============================================================
+# COMMON SIZE ENGINE
+# ============================================================
+
+@dataclass
+class CommonSizeInputs:
+    symbol: str
+    revenue: float = 0.0
+    total_operating_expenses: float = 0.0
+    cogs: float = 0.0
+    employee_expenses: float = 0.0
+    subcontracting: float = 0.0
+    ebitda: float = 0.0
+    depreciation: float = 0.0
+    ebit: float = 0.0
+    interest: float = 0.0
+    pbt: float = 0.0
+    tax: float = 0.0
+    pat: float = 0.0
+    total_assets: float = 0.0
+    current_assets: float = 0.0
+    fixed_assets: float = 0.0
+    total_liabilities: float = 0.0
+    current_liabilities: float = 0.0
+    total_equity: float = 0.0
+    lease_liabilities: float = 0.0
+    cfo: float = 0.0
+    cfi: float = 0.0
+    cff: float = 0.0
+    base_type: str = "REVENUE"  # REVENUE or TOTAL_OPEX
+    cash_flow_base: str = "REVENUE"  # REVENUE or TOTAL_INFLOW
+
+@dataclass
+class CommonSizeOutputs:
+    symbol: str
+    pnl_common_size: Dict[str, float]
+    balance_sheet_common_size: Dict[str, float]
+    cash_flow_common_size: Dict[str, float]
+    base_used: str
+    reconciliation_check: bool
+    inputs_hash: str = ""
+    calculation_timestamp: str = ""
+
+class CommonSizeEngine(DeterministicCalculator):
+    """Common Size Statement Engine with zero-revenue fallback and Ind AS 116."""
+
+    def calculate(self, inputs: CommonSizeInputs) -> CommonSizeOutputs:
+        # Determine P&L base
+        if inputs.base_type == "REVENUE" and inputs.revenue != 0:
+            pnl_base = inputs.revenue
+        elif inputs.revenue == 0 and inputs.total_operating_expenses > 0:
+            pnl_base = inputs.total_operating_expenses  # Fallback for pre-revenue firms
+        else:
+            pnl_base = inputs.revenue if inputs.revenue != 0 else 1.0
+
+        # P&L Common Size
+        pnl_cs = {}
+        if pnl_base != 0:
+            pnl_cs['cogs_pct'] = inputs.cogs / pnl_base * 100
+            pnl_cs['employee_expenses_pct'] = inputs.employee_expenses / pnl_base * 100
+            pnl_cs['subcontracting_pct'] = inputs.subcontracting / pnl_base * 100
+            pnl_cs['ebitda_pct'] = inputs.ebitda / pnl_base * 100
+            pnl_cs['depreciation_pct'] = inputs.depreciation / pnl_base * 100
+            pnl_cs['ebit_pct'] = inputs.ebit / pnl_base * 100
+            pnl_cs['interest_pct'] = inputs.interest / pnl_base * 100
+            # Ind AS 116: separate interest on borrowings vs lease accretion
+            pnl_cs['interest_on_borrowings_pct'] = inputs.interest / pnl_base * 100
+            pnl_cs['interest_lease_accretion_pct'] = 0.0  # Placeholder for Ind AS 116 separation
+            pnl_cs['pbt_pct'] = inputs.pbt / pnl_base * 100
+            pnl_cs['tax_pct'] = inputs.tax / pnl_base * 100
+            pnl_cs['pat_pct'] = inputs.pat / pnl_base * 100
+
+        # Balance Sheet Common Size (base = Total Assets)
+        bs_base = inputs.total_assets if inputs.total_assets != 0 else 1.0
+        bs_cs = {}
+        if bs_base != 0:
+            bs_cs['current_assets_pct'] = inputs.current_assets / bs_base * 100
+            bs_cs['fixed_assets_pct'] = inputs.fixed_assets / bs_base * 100
+            bs_cs['total_liabilities_pct'] = inputs.total_liabilities / bs_base * 100
+            bs_cs['current_liabilities_pct'] = inputs.current_liabilities / bs_base * 100
+            bs_cs['lease_liabilities_pct'] = inputs.lease_liabilities / bs_base * 100
+            bs_cs['total_equity_pct'] = inputs.total_equity / bs_base * 100
+
+        # Reconciliation: Liabilities% + Equity% should = 100%
+        recon_check = abs((inputs.total_liabilities + inputs.total_equity) / bs_base * 100 - 100.0) < 0.01 if bs_base != 0 else False
+
+        # Cash Flow Common Size
+        if inputs.cash_flow_base == "REVENUE" and inputs.revenue != 0:
+            cf_base = inputs.revenue
+        else:
+            total_inflow = abs(inputs.cfo) + abs(inputs.cfi) + abs(inputs.cff)
+            cf_base = total_inflow if total_inflow > 0 else 1.0
+
+        cf_cs = {}
+        if cf_base != 0:
+            cf_cs['cfo_pct'] = inputs.cfo / cf_base * 100
+            cf_cs['cfi_pct'] = inputs.cfi / cf_base * 100
+            cf_cs['cff_pct'] = inputs.cff / cf_base * 100
+
+        base_used = "REVENUE" if (inputs.base_type == "REVENUE" and inputs.revenue != 0) else "TOTAL_OPEX"
+
+        return CommonSizeOutputs(
+            symbol=inputs.symbol,
+            pnl_common_size=pnl_cs,
+            balance_sheet_common_size=bs_cs,
+            cash_flow_common_size=cf_cs,
+            base_used=base_used,
+            reconciliation_check=recon_check,
+            inputs_hash=self._hash_inputs(inputs),
+            calculation_timestamp=datetime.now().isoformat()
+        )
+
+# ============================================================
+# REVENUE PROJECTION ENGINE
+# ============================================================
+
+@dataclass
+class RevenueProjectionInputs:
+    symbol: str
+    segments: List[Dict[str, Any]] = field(default_factory=list)  # [{name, revenue, growth_rate, tam}]
+    intersegment_eliminations: float = 0.0
+    ebitda_margin: float = 0.0
+    depreciation_pct: float = 0.0
+    tax_rate: float = 0.25
+    capex_pct: float = 0.0
+    nwc_change_pct: float = 0.0
+    s_curve_params: Dict[str, Any] = field(default_factory=dict)  # {L, k, t0}
+
+@dataclass
+class RevenueProjectionOutputs:
+    symbol: str
+    consolidated_revenue: float
+    segment_revenues: Dict[str, float]
+    fcf: float
+    ebitda: float
+    ebit: float
+    tax_shield: float
+    s_curve_adoption: Optional[float]
+    inputs_hash: str = ""
+    calculation_timestamp: str = ""
+
+class RevenueProjectionEngine(DeterministicCalculator):
+    """Revenue Projection Engine with correct FCF tax shield."""
+
+    def calculate(self, inputs: RevenueProjectionInputs) -> RevenueProjectionOutputs:
+        # Segment revenues with intersegment eliminations
+        segment_revenues = {}
+        total_segment_revenue = 0.0
+        for seg in inputs.segments:
+            name = seg.get('name', 'Unknown')
+            rev = seg.get('revenue', 0.0)
+            growth = seg.get('growth_rate', 0.0)
+            projected_rev = rev * (1 + growth)
+            segment_revenues[name] = projected_rev
+            total_segment_revenue += projected_rev
+
+        consolidated_revenue = total_segment_revenue - inputs.intersegment_eliminations
+
+        # EBITDA
+        ebitda = consolidated_revenue * inputs.ebitda_margin
+
+        # D&A
+        da = consolidated_revenue * inputs.depreciation_pct
+
+        # EBIT = EBITDA - D&A
+        ebit = ebitda - da
+
+        # Correct FCF: FCFF = (EBITDA - DA) * (1 - t) + DA - Capex - ΔNWC
+        # = EBITDA * (1 - t) + DA * t - Capex - ΔNWC
+        tax_shield = da * inputs.tax_rate
+        nopat = ebit * (1 - inputs.tax_rate)
+        fcf = nopat + da - (consolidated_revenue * inputs.capex_pct) - (consolidated_revenue * inputs.nwc_change_pct)
+
+        # S-curve adoption (logistic)
+        s_curve_adoption = None
+        if inputs.s_curve_params:
+            L = inputs.s_curve_params.get('L', 1.0)
+            k = inputs.s_curve_params.get('k', 0.5)
+            t0 = inputs.s_curve_params.get('t0', 5.0)
+            t = inputs.s_curve_params.get('t', 1.0)
+            # Validate: L <= TAM, k in [0.05, 2.0]
+            tam = inputs.s_curve_params.get('TAM', L)
+            L = min(L, tam)
+            k = max(0.05, min(2.0, k))
+            import math
+            s_curve_adoption = L / (1 + math.exp(-k * (t - t0)))
+
+        return RevenueProjectionOutputs(
+            symbol=inputs.symbol,
+            consolidated_revenue=consolidated_revenue,
+            segment_revenues=segment_revenues,
+            fcf=fcf,
+            ebitda=ebitda,
+            ebit=ebit,
+            tax_shield=tax_shield,
+            s_curve_adoption=s_curve_adoption,
+            inputs_hash=self._hash_inputs(inputs),
+            calculation_timestamp=datetime.now().isoformat()
+        )
+
+# ============================================================
+# CONCALL CONSISTENCY ENGINE
+# ============================================================
+
+@dataclass
+class ConcallConsistencyInputs:
+    symbol: str
+    guidance_items: List[Dict[str, Any]] = field(default_factory=list)
+    # Each item: {type: 'revenue'|'margin'|'capex'|'qualitative', lower: float, upper: float, actual: float, period: int}
+    lambda_decay: float = 0.85
+
+@dataclass
+class ConcallConsistencyOutputs:
+    symbol: str
+    item_scores: List[Dict[str, Any]]
+    weighted_score: float
+    beat_count: int
+    met_count: int
+    miss_count: int
+    inputs_hash: str = ""
+    calculation_timestamp: str = ""
+
+class ConcallConsistencyEngine(DeterministicCalculator):
+    """Concall Consistency Engine with range parsing and time-decay weighting."""
+
+    TYPE_WEIGHTS = {
+        'revenue': 0.30,
+        'volume': 0.30,
+        'margin': 0.35,
+        'ebitda': 0.35,
+        'capex': 0.20,
+        'qualitative': 0.15,
+        'milestone': 0.15,
+    }
+
+    def calculate(self, inputs: ConcallConsistencyInputs) -> ConcallConsistencyOutputs:
+        items = inputs.guidance_items
+        n = len(items)
+        if n == 0:
+            return ConcallConsistencyOutputs(
+                symbol=inputs.symbol,
+                item_scores=[],
+                weighted_score=0.0,
+                beat_count=0,
+                met_count=0,
+                miss_count=0,
+                inputs_hash=self._hash_inputs(inputs),
+                calculation_timestamp=datetime.now().isoformat()
+            )
+
+        item_scores = []
+        beat_count = 0
+        met_count = 0
+        miss_count = 0
+        weighted_sum = 0.0
+        weight_sum = 0.0
+
+        for i, item in enumerate(items):
+            g_type = item.get('type', 'qualitative').lower()
+            lower = item.get('lower', 0.0)
+            upper = item.get('upper', 0.0)
+            actual = item.get('actual', 0.0)
+            period = item.get('period', i + 1)
+
+            # Range parsing: actual vs [lower, upper]
+            if actual > upper:
+                status = "BEAT"
+                score = 1.0
+                beat_count += 1
+            elif lower <= actual <= upper:
+                status = "MET"
+                score = 0.5
+                met_count += 1
+            else:
+                status = "MISS"
+                score = 0.0
+                miss_count += 1
+
+            # Type weight
+            w_type = self.TYPE_WEIGHTS.get(g_type, 0.15)
+
+            # Time decay: lambda^(N - t)
+            time_weight = inputs.lambda_decay ** (n - period)
+
+            combined_weight = w_type * time_weight
+
+            item_scores.append({
+                'type': g_type,
+                'lower': lower,
+                'upper': upper,
+                'actual': actual,
+                'status': status,
+                'score': score,
+                'weight': combined_weight,
+            })
+
+            weighted_sum += combined_weight * score
+            weight_sum += combined_weight
+
+        weighted_score = weighted_sum / weight_sum if weight_sum > 0 else 0.0
+
+        return ConcallConsistencyOutputs(
+            symbol=inputs.symbol,
+            item_scores=item_scores,
+            weighted_score=round(weighted_score, 4),
+            beat_count=beat_count,
+            met_count=met_count,
+            miss_count=miss_count,
+            inputs_hash=self._hash_inputs(inputs),
+            calculation_timestamp=datetime.now().isoformat()
+        )
+
 class MathEngineRegistry:
     """Central registry for all deterministic engines"""
     
@@ -1762,6 +2507,12 @@ class MathEngineRegistry:
         'portfolio': PortfolioAnalyticsEngine(),
         'screening': ScreeningEngine(),
         'ratio_analysis': RatioAnalysisEngine(),
+        'turnaround': TurnaroundEngine(),
+        'hedging': HedgingEngine(),
+        'risk_score': RiskScoreEngine(),
+        'common_size': CommonSizeEngine(),
+        'revenue_projection': RevenueProjectionEngine(),
+        'concall_consistency': ConcallConsistencyEngine(),
     }
     
     @classmethod
