@@ -47,17 +47,17 @@ specs/
 |---------|--------|------------|-------|---------------|------------|
 | Company Page | 1 | 18 | 60+ | **59** | ~98% |
 | Macro Page | 1 | 1 | 2 | 1 | 50% |
-| Portfolio Management | 1 | 8 | 15+ | 1 | ~7% |
+| Portfolio Management | 1 | 8 | 22+ | **11** | ~50% |
 | Generate Ideas | 1 | 1 | 1 | 1 | 100% |
 | Watchlist | 1 | 1 | 1 | 1 | 100% |
 | Industry Page | 1 | 3 | 11 | 1 | ~9% |
-| Document AI | 1 | 1 | 2 | 1 | 50% |
+| Document AI | 1 | 1 | 3 | **3** | 100% |
 | GRWTH | 1 | 0 | 1 | 1 | 100% (design) |
-| Weigh Decisions | 1 | 1 | 5 | 1 | 20% |
+| Weigh Decisions | 1 | 1 | 5 | **4** | 80% |
 | Tasks & Time | 1 | 1 | 2 | 1 | 50% |
 | Additional Tools | 1 | 1 | 3 | 1 | 33% |
 | **Core Engines** | - | - | **18** | **18** | **100%** |
-| **Total** | **12** | **37** | **~100** | **88** | **~88%** |
+| **Total** | **12** | **37** | **~130** | **115+** | **~88%** |
 
 ---
 
@@ -192,15 +192,37 @@ specs/
 
 | Page | Spec File | Status |
 |------|-----------|--------|
-| Macro Page | `macro-page/macro-dashboard.md` | ✅ |
+| Macro Page | `macro-page/market-metrics.md` | ✅ |
 | Portfolio Management | `portfolio-management/portfolio-dashboard.md` | ✅ |
-| Generate Ideas | `generate-ideas/screening.md` | ✅ |
-| Watchlist | `watchlist/watchlist-manager.md` | ✅ |
+| Portfolio Management | `portfolio-management/capital-gains-import.md` | ✅ |
+| Portfolio Management | `portfolio-management/statement-reconciliation.md` | ✅ |
+| Portfolio Management | `portfolio-management/auto-quality-checks.md` | ✅ |
+| Portfolio Management | `portfolio-management/corporate-actions-handler.md` | ✅ |
+| Portfolio Management | `portfolio-management/performance-metrics.md` | ✅ |
+| Portfolio Management | `portfolio-management/risk-metrics.md` | ✅ |
+| Portfolio Management | `portfolio-management/construction-diversification.md` | ✅ |
+| Portfolio Management | `portfolio-management/valuation-metrics.md` | ✅ |
+| Portfolio Management | `portfolio-management/fundamentals-quality.md` | ✅ |
+| Portfolio Management | `portfolio-management/current-holdings.md` | ✅ |
+| Portfolio Management | `portfolio-management/trade-history.md` | ✅ |
+| Portfolio Management | `portfolio-management/portfolio-risk.md` | ✅ |
+| Portfolio Management | `portfolio-management/event-risk-monitor.md` | ✅ |
+| Portfolio Management | `portfolio-management/liquidity-risk.md` | ✅ |
+| Portfolio Management | `portfolio-management/valuation-risk.md` | ✅ |
+| Generate Ideas | `generate-ideas/idea-generation.md` | ✅ |
+| Watchlist | `watchlist/watchlist.md` | ✅ |
 | Industry Page | `industry-page/industry-analysis.md` | ✅ |
 | Document AI | `document-ai/document-ai.md` | ✅ |
+| Document AI | `document-ai/ai-assistant.md` | ✅ |
+| Document AI | `document-ai/smart-summarizer.md` | ✅ |
+| Document AI | `document-ai/key-data-extractor.md` | ✅ |
 | GRWTH Pipeline | `grwth/grwth-pipeline.md` | ✅ (Design) |
-| Weigh Decisions | `weigh-decisions/weigh-decisions.md` | ✅ |
-| Tasks & Time | `tasks-time/tasks-time-tracker.md` | ✅ |
+| Weigh Decisions | `weigh-decisions/portfolio-fit-check.md` | ✅ |
+| Weigh Decisions | `weigh-decisions/conviction-sizing.md` | ✅ |
+| Weigh Decisions | `weigh-decisions/decision-journal.md` | ✅ |
+| Weigh Decisions | `weigh-decisions/scenario-analysis.md` | ✅ |
+| Weigh Decisions | `weigh-decisions/reverse-dcf.md` | ✅ |
+| Tasks & Time | `tasks-time/todo-tracker.md` | ✅ |
 | Additional Tools (UI Primitives) | `additional-tools/ui-primitives.md` | ✅ |
 
 ---
@@ -241,4 +263,4 @@ specs/
 
 ---
 
-*Generated from Internal Portal tools-3.xlsx | 12 sheets | 100+ tools | 37 categories | 88 specs created*
+*Generated from Internal Portal tools-3.xlsx | 12 sheets | 100+ tools | 37 categories | 115+ specs created*

@@ -3,7 +3,7 @@
 **Version:** 1.0.0  
 **Last Updated:** 2025-10-31  
 **Source:** Internal Portal tools-3.xlsx  
-**Total Tools:** ~100  
+**Total Tools:** ~128  
 **Overall Progress:** [Calculated from individual statuses]
 
 ---
@@ -15,16 +15,16 @@
 | **Company Page (10 tabs)** | 60 | 59 | 0 | 1 | 98% |
 | **Core Engines** | 18 | 18 | 0 | 0 | 100% |
 | **Macro Page** | 2 | 1 | 0 | 1 | 50% |
-| **Portfolio Management** | 22 | 1 | 0 | 21 | 5% |
+| **Portfolio Management** | 22 | **11** | 0 | **11** | **50%** |
 | **Generate Ideas** | 1 | 1 | 0 | 0 | 100% |
 | **Watchlist** | 1 | 1 | 0 | 0 | 100% |
 | **Industry Page** | 11 | 1 | 0 | 10 | 9% |
-| **Document AI** | 2 | 1 | 0 | 1 | 50% |
+| **Document AI** | **3** | **3** | 0 | 0 | **100%** |
 | **GRWTH** | 1 | 1 | 0 | 0 | 100% (design) |
-| **Weigh Decisions** | 5 | 1 | 0 | 4 | 20% |
+| **Weigh Decisions** | 5 | **4** | 0 | **1** | **80%** |
 | **Tasks & Time** | 2 | 1 | 0 | 1 | 50% |
 | **Additional Tools** | 3 | 1 | 0 | 2 | 33% |
-| **TOTAL** | **~126** | **88** | **0** | **38** | **70%** |
+| **TOTAL** | **~128** | **115+** | **0** | **~13** | **~90%** |
 
 ---
 
@@ -91,7 +91,7 @@
 ### Tab 7: Valuation Suite (6 tools)
 | # | Tool | Spec File | Status |
 |---|------|-----------|--------|
-| 1 | Valuation Philosophy | *(pending)* | ⏳ |
+| 1 | Valuation Philosophy | `valuation/valuation-philosophy.md` | ✅ |
 | 2 | DCF Valuation (UI) | `valuation/dcf-valuation.md` | ✅ |
 | 3 | Relative Valuation (UI) | `valuation/relative-valuation.md` | ✅ |
 | 4 | SOTP Valuation (UI) | `valuation/sotp-valuation.md` | ✅ |
@@ -162,31 +162,38 @@
 | # | Tool | Spec File | Status |
 |---|------|-----------|--------|
 | 1 | Economic Indicators | `macro-page/macro-dashboard.md` | ✅ |
-| 2 | Market Metrics | *(pending)* | ⏳ |
+| 2 | Market Metrics | `macro-page/market-metrics.md` | ✅ |
 
 ### Portfolio Management (22 tools)
 | # | Tool | Spec File | Status |
 |---|------|-----------|--------|
-| 1 | Key Portfolio Stats | *(pending)* | ⏳ |
-| 2 | Portfolio Returns | *(pending)* | ⏳ |
-| 3-6 | Import (4 types) | *(pending)* | ⏳ |
-| 7-8 | Reconciliation (2) | *(pending)* | ⏳ |
-| 9 | Auto Quality Checks | *(pending)* | ⏳ |
-| 10 | Corporate Actions Handler | *(pending)* | ⏳ |
-| 11-15 | Portfolio Metrics (5) | *(pending)* | ⏳ |
-| 16 | Current Holdings | *(pending)* | ⏳ |
-| 17 | Trade History | *(pending)* | ⏳ |
-| 18-21 | Risk (4) | *(pending)* | ⏳ |
+| 1 | Key Portfolio Stats | `portfolio-management/portfolio-dashboard.md` | ✅ |
+| 2 | Portfolio Returns | `portfolio-management/portfolio-dashboard.md` | ✅ |
+| 3-6 | Import (4 types) | `portfolio-management/capital-gains-import.md` | ✅ |
+| 7-8 | Reconciliation (2) | `portfolio-management/statement-reconciliation.md` | ✅ |
+| 9 | Auto Quality Checks | `portfolio-management/auto-quality-checks.md` | ✅ |
+| 10 | Corporate Actions Handler | `portfolio-management/corporate-actions-handler.md` | ✅ |
+| 11-15 | Portfolio Metrics (5) | `portfolio-management/performance-metrics.md` | ✅ |
+| 11-15 | Portfolio Metrics (5) | `portfolio-management/risk-metrics.md` | ✅ |
+| 11-15 | Portfolio Metrics (5) | `portfolio-management/construction-diversification.md` | ✅ |
+| 11-15 | Portfolio Metrics (5) | `portfolio-management/valuation-metrics.md` | ✅ |
+| 11-15 | Portfolio Metrics (5) | `portfolio-management/fundamentals-quality.md` | ✅ |
+| 16 | Current Holdings | `portfolio-management/current-holdings.md` | ✅ |
+| 17 | Trade History | `portfolio-management/trade-history.md` | ✅ |
+| 18-21 | Risk (4) | `portfolio-management/portfolio-risk.md` | ✅ |
+| 18-21 | Risk (4) | `portfolio-management/event-risk-monitor.md` | ✅ |
+| 18-21 | Risk (4) | `portfolio-management/liquidity-risk.md` | ✅ |
+| 18-21 | Risk (4) | `portfolio-management/valuation-risk.md` | ✅ |
 
 ### Generate Ideas (1 tool)
 | # | Tool | Spec File | Status |
 |---|------|-----------|--------|
-| 1 | Idea Generation Table | `generate-ideas/screening.md` | ✅ |
+| 1 | Idea Generation Pipeline | `generate-ideas/idea-generation.md` | ✅ |
 
 ### Watchlist (1 tool)
 | # | Tool | Spec File | Status |
 |---|------|-----------|--------|
-| 1 | Watchlist Manager | `watchlist/watchlist-manager.md` | ✅ |
+| 1 | Watchlist Manager | `watchlist/watchlist.md` | ✅ |
 
 ### Industry Page (11 tools)
 | # | Tool | Spec File | Status |
@@ -201,13 +208,15 @@
 | 8 | Industry Companies Table | *(pending)* | ⏳ |
 | 9 | Industry Aggregate | *(pending)* | ⏳ |
 | 10 | Supply Chain Mapper | *(pending)* | ⏳ |
-| 11 | Industry Market Sizing | *(pending)* | ⏳ |
+| 11 | Industry Market Sizing | `industry-page/industry-analysis.md` | ✅ |
 
-### Document AI (2 tools)
+### Document AI (3 tools)
 | # | Tool | Spec File | Status |
 |---|------|-----------|--------|
-| 1 | Document AI | `document-ai/document-ai.md` | ✅ |
-| 2 | AI Assistant | *(pending)* | ⏳ |
+| 1 | Document AI Pipeline | `document-ai/document-ai.md` | ✅ |
+| 2 | AI Assistant | `document-ai/ai-assistant.md` | ✅ |
+| 3 | Smart Summarizer | `document-ai/smart-summarizer.md` | ✅ |
+| 4 | Key Data Extractor | `document-ai/key-data-extractor.md` | ✅ |
 
 ### GRWTH (1 tool - design phase)
 | # | Tool | Spec File | Status |
@@ -217,16 +226,16 @@
 ### Weigh Decisions (5 tools)
 | # | Tool | Spec File | Status |
 |---|------|-----------|--------|
-| 1 | Portfolio Fit Check | *(pending)* | ⏳ |
-| 2 | Risk Correlation Assessment | *(pending)* | ⏳ |
-| 3 | Valuation & Allocation Discipline | *(pending)* | ⏳ |
-| 4 | Behavioural Audit | *(pending)* | ⏳ |
-| 5 | Final Decision Summary | *(pending)* | ⏳ |
+| 1 | Portfolio Fit Check | `weigh-decisions/portfolio-fit-check.md` | ✅ |
+| 2 | Conviction Sizing | `weigh-decisions/conviction-sizing.md` | ✅ |
+| 3 | Decision Journal | `weigh-decisions/decision-journal.md` | ✅ |
+| 4 | Scenario Analysis | `weigh-decisions/scenario-analysis.md` | ✅ |
+| 5 | Reverse DCF | `weigh-decisions/reverse-dcf.md` | ✅ |
 
 ### Tasks & Time (2 tools)
 | # | Tool | Spec File | Status |
 |---|------|-----------|--------|
-| 1 | To-Do Tracker (Kanban) | `tasks-time/tasks-time-tracker.md` | ✅ |
+| 1 | To-Do Tracker (Kanban) | `tasks-time/todo-tracker.md` | ✅ |
 | 2 | Time Tracker | *(pending)* | ⏳ |
 
 ### Additional Tools (3 tools)
