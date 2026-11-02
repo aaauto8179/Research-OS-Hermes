@@ -2558,3 +2558,24 @@ def run_portfolio(inputs: PortfolioMetricsInputs) -> PortfolioMetricsOutputs:
 
 def run_screening(universe: List[Dict], criteria: ScreeningCriteria) -> List[ScreeningResult]:
     return MathEngineRegistry.get('screening').calculate(universe, criteria)
+
+def run_turnaround(inputs: TurnaroundInputs) -> TurnaroundOutputs:
+    return MathEngineRegistry.get('turnaround').calculate(inputs)
+
+def run_hedging(inputs: HedgingInputs) -> HedgingOutputs:
+    return MathEngineRegistry.get('hedging').calculate(inputs)
+
+def run_risk_score(inputs: RiskScoreInputs) -> RiskScoreOutputs:
+    return MathEngineRegistry.get('risk_score').calculate(inputs)
+
+def run_common_size(inputs: CommonSizeInputs) -> CommonSizeOutputs:
+    return MathEngineRegistry.get('common_size').calculate(inputs)
+
+def run_revenue_projection(inputs: RevenueProjectionInputs) -> RevenueProjectionOutputs:
+    return MathEngineRegistry.get('revenue_projection').calculate(inputs)
+
+def run_concall_consistency(inputs: ConcallConsistencyInputs) -> ConcallConsistencyOutputs:
+    return MathEngineRegistry.get('concall_consistency').calculate(inputs)
+
+def run_ratio_analysis(inputs: RatioAnalysisInputs) -> RatioAnalysisOutputs:
+    return MathEngineRegistry.get('ratio_analysis').calculate(inputs)
