@@ -24,6 +24,13 @@ from math_engine import (
     AltmanZEngine, AltmanZInputs,
     PiotroskiEngine, PiotroskiInputs,
     PortfolioAnalyticsEngine, PortfolioMetricsInputs,
+    RatioAnalysisEngine, RatioAnalysisInputs,
+    TurnaroundEngine, TurnaroundInputs,
+    HedgingEngine, HedgingInputs,
+    RiskScoreEngine, RiskScoreInputs,
+    CommonSizeEngine, CommonSizeInputs,
+    RevenueProjectionEngine, RevenueProjectionInputs,
+    ConcallConsistencyEngine, ConcallConsistencyInputs,
 )
 from math_engine.portfolio.corporate_actions import CorporateActionsEngine, CorporateAction
 
@@ -142,6 +149,70 @@ async def corporate_actions(request: Request):
     holdings = data.get("holdings", [])
     result = engine.adjust_holdings(holdings, action)
     return JSONResponse(content={"adjusted_holdings": result})
+
+
+
+@app.post("/ratio-analysis")
+async def ratio_analysis(request: Request):
+    data = await request.json()
+    inputs = RatioAnalysisInputs(**data)
+    engine = RatioAnalysisEngine()
+    result = engine.calculate(inputs)
+    return JSONResponse(content=result.model_dump())
+
+
+@app.post("/turnaround")
+async def turnaround(request: Request):
+    data = await request.json()
+    inputs = TurnaroundInputs(**data)
+    engine = TurnaroundEngine()
+    result = engine.calculate(inputs)
+    return JSONResponse(content=result.model_dump())
+
+
+@app.post("/hedging")
+async def hedging(request: Request):
+    data = await request.json()
+    inputs = HedgingInputs(**data)
+    engine = HedgingEngine()
+    result = engine.calculate(inputs)
+    return JSONResponse(content=result.model_dump())
+
+
+@app.post("/risk-score")
+async def risk_score(request: Request):
+    data = await request.json()
+    inputs = RiskScoreInputs(**data)
+    engine = RiskScoreEngine()
+    result = engine.calculate(inputs)
+    return JSONResponse(content=result.model_dump())
+
+
+@app.post("/common-size")
+async def common_size(request: Request):
+    data = await request.json()
+    inputs = CommonSizeInputs(**data)
+    engine = CommonSizeEngine()
+    result = engine.calculate(inputs)
+    return JSONResponse(content=result.model_dump())
+
+
+@app.post("/revenue-projection")
+async def revenue_projection(request: Request):
+    data = await request.json()
+    inputs = RevenueProjectionInputs(**data)
+    engine = RevenueProjectionEngine()
+    result = engine.calculate(inputs)
+    return JSONResponse(content=result.model_dump())
+
+
+@app.post("/concall-consistency")
+async def concall_consistency(request: Request):
+    data = await request.json()
+    inputs = ConcallConsistencyInputs(**data)
+    engine = ConcallConsistencyEngine()
+    result = engine.calculate(inputs)
+    return JSONResponse(content=result.model_dump())
 
 
 @app.websocket("/ws/prices")
