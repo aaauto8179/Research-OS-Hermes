@@ -54,6 +54,9 @@ const AIAssistant = dynamic(() => import("./AIAssistant"), { loading: () => <Wid
 const MarketMetrics = dynamic(() => import("./MarketMetrics"), { loading: () => <WidgetSkeleton /> });
 const MacroDashboard = dynamic(() => import("./MacroDashboard"), { loading: () => <WidgetSkeleton /> });
 const WatchlistManager = dynamic(() => import("./WatchlistManager"), { loading: () => <WidgetSkeleton /> });
+const TodoTracker = dynamic(() => import("./TodoTracker"), { loading: () => <WidgetSkeleton /> });
+const TimeTracker = dynamic(() => import("./TimeTracker"), { loading: () => <WidgetSkeleton /> });
+const KanbanBoard = dynamic(() => import("./KanbanBoard"), { loading: () => <WidgetSkeleton /> });
 
 function WidgetSkeleton() {
   return (
@@ -112,6 +115,9 @@ export const WIDGET_REGISTRY: Record<string, React.ComponentType<any>> = {
   "market-metrics": MarketMetrics,
   "macro-dashboard": MacroDashboard,
   "watchlist-manager": WatchlistManager,
+  "todo-tracker": TodoTracker,
+  "time-tracker": TimeTracker,
+  "kanban-board": KanbanBoard,
 };
 
 export function WidgetRenderer({ type, props, ...rest }: { type: string; props?: any; [key: string]: any }) {
