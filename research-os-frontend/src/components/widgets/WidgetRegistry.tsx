@@ -57,6 +57,8 @@ const WatchlistManager = dynamic(() => import("./WatchlistManager"), { loading: 
 const TodoTracker = dynamic(() => import("./TodoTracker"), { loading: () => <WidgetSkeleton /> });
 const TimeTracker = dynamic(() => import("./TimeTracker"), { loading: () => <WidgetSkeleton /> });
 const KanbanBoard = dynamic(() => import("./KanbanBoard"), { loading: () => <WidgetSkeleton /> });
+const IdeaGeneration = dynamic(() => import("./IdeaGeneration"), { loading: () => <WidgetSkeleton /> });
+const ScreeningTable = dynamic(() => import("./ScreeningTable"), { loading: () => <WidgetSkeleton /> });
 
 function WidgetSkeleton() {
   return (
@@ -118,6 +120,8 @@ export const WIDGET_REGISTRY: Record<string, React.ComponentType<any>> = {
   "todo-tracker": TodoTracker,
   "time-tracker": TimeTracker,
   "kanban-board": KanbanBoard,
+  "idea-generation": IdeaGeneration,
+  "screening-table": ScreeningTable,
 };
 
 export function WidgetRenderer({ type, props, ...rest }: { type: string; props?: any; [key: string]: any }) {
