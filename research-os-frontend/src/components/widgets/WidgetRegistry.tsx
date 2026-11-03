@@ -48,6 +48,7 @@ const PiotroskiFScore = dynamic(() => import("./PiotroskiFScore"), { loading: ()
 const PortfolioAnalytics = dynamic(() => import("./PortfolioAnalytics"), { loading: () => <WidgetSkeleton /> });
 const ForensicFlags = dynamic(() => import("./ForensicFlags"), { loading: () => <WidgetSkeleton /> });
 const ManagementConsistency = dynamic(() => import("./ManagementConsistency"), { loading: () => <WidgetSkeleton /> });
+const SmartSummarizer = dynamic(() => import("./SmartSummarizer"), { loading: () => <WidgetSkeleton /> });
 
 function WidgetSkeleton() {
   return (
@@ -100,6 +101,7 @@ export const WIDGET_REGISTRY: Record<string, React.ComponentType<any>> = {
   "portfolio-analytics": PortfolioAnalytics,
   "forensic-flags": ForensicFlags,
   "management-consistency": ManagementConsistency,
+  "smart-summarizer": SmartSummarizer,
 };
 
 export function WidgetRenderer({ type, props, ...rest }: { type: string; props?: any; [key: string]: any }) {
