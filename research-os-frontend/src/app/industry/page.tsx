@@ -12,6 +12,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { DashboardCanvas } from "@/components/DashboardCanvas";
 import { MetricCard } from "@/components/ui/metric-card";
+import { WidgetRenderer } from "@/components/widgets/WidgetRegistry";
 
 const INDUSTRIES = [
   { code: "AUTO", name: "Automobiles & Auto Components", companies: 15, mcap: 1200000, revenue_growth: 12, ebitda_margin: 14, roe: 15 },
@@ -145,22 +146,31 @@ function IndustryCard({ industry, onClick }: { industry: any; onClick: () => voi
 }
 
 function IndustryDetail({ industryCode, onBack }: { industryCode: string; onBack: () => void }) {
+  const industryWidgets = [
+    "industry-overview",
+    "demand-drivers",
+    "sector-heatmap",
+    "peer-comparison-table",
+    "value-chain-mapper",
+    "margin-bridge",
+  ];
+
   return (
     <div className="flex-1 flex flex-col">
       <div className="flex items-center justify-between mb-4">
         <Button variant="ghost" size="icon" onClick={onBack}><ArrowLeft className="h-5 w-5" /></Button>
         <div className="flex-1 text-center">
-          <h2 className="text-xl font-bold">{industryCode} Detail View</h2>
+          <h2 className="text-xl font-bold">{industryCode} Deep Dive</h2>
         </div>
         <Button variant="outline" onClick={onBack}><ArrowLeft className="mr-2 h-4 w-4" /> Back to Overview</Button>
       </div>
 
-      <div className="flex-1 flex items-center justify-center text-muted-foreground">
-        <div className="text-center">
-          <Building2 className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
-          <h3 className="text-lg font-medium">Deep dive for {industryCode}</h3>
-          <p className="text-sm">Detailed industry analysis with demand drivers, supply dynamics, regulations, and value chain</p>
-        </div>
+      <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 overflow-y-auto">
+        {industryWidgets.map((w, i) => (
+          <div key={i} className="min-h-[300px]">
+            <WidgetRenderer type={w} />
+          </div>
+        ))}
       </div>
     </div>
   );
