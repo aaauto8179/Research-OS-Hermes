@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { Portfolio, Holding, Transaction } from "@/lib/types";
 import { MOCK_COMPANIES } from "@/lib/mock-data";
+import { WidgetRenderer } from "@/components/widgets/WidgetRegistry";
 
 const MOCK_PORTFOLIOS = [
   { id: "1", name: "Core Portfolio", benchmark: "NIFTY50", currency: "INR", active: true },
@@ -348,31 +349,32 @@ export default function PortfolioPage() {
         </TabsContent>
 
         {/* Analytics Tab */}
-        <TabsContent value="analytics" className="flex-1 mt-4 space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <Card>
-              <CardHeader><CardTitle>Risk Metrics</CardTitle></CardHeader>
-              <CardContent className="grid grid-cols-2 gap-4">
-                <MetricCard label="Annualized Volatility" value={`${(metrics.volatility*100).toFixed(1)}%`} />
-                <MetricCard label="Beta vs NIFTY50" value={metrics.beta.toFixed(2)} />
-                <MetricCard label="Sharpe Ratio" value={metrics.sharpe.toFixed(2)} />
-                <MetricCard label="Sortino Ratio" value={metrics.sortino.toFixed(2)} />
-                <MetricCard label="Max Drawdown" value={`${(metrics.maxDD*100).toFixed(1)}%`} />
-                <MetricCard label="Max DD Duration" value={`${metrics.maxDDDuration} days`} />
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader><CardTitle>Return Attribution</CardTitle></CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex justify-between"><span>Portfolio Return (TWR)</span><span className="font-bold text-green-600">68.0%</span></div>
-                  <div className="flex justify-between"><span>Benchmark Return</span><span className="font-bold">30.0%</span></div>
-                  <div className="flex justify-between border-t pt-2"><span className="font-medium">Alpha</span><span className="font-bold text-green-600">38.0%</span></div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
+                <TabsContent value="analytics" className="flex-1 mt-4 space-y-4">
+                  <WidgetRenderer type="portfolio-analytics" />
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <Card>
+                      <CardHeader><CardTitle>Risk Metrics</CardTitle></CardHeader>
+                      <CardContent className="grid grid-cols-2 gap-4">
+                        <MetricCard label="Annualized Volatility" value={`${(metrics.volatility*100).toFixed(1)}%`} />
+                        <MetricCard label="Beta vs NIFTY50" value={metrics.beta.toFixed(2)} />
+                        <MetricCard label="Sharpe Ratio" value={metrics.sharpe.toFixed(2)} />
+                        <MetricCard label="Sortino Ratio" value={metrics.sortino.toFixed(2)} />
+                        <MetricCard label="Max Drawdown" value={`${(metrics.maxDD*100).toFixed(1)}%`} />
+                        <MetricCard label="Max DD Duration" value={`${metrics.maxDDDuration} days`} />
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardHeader><CardTitle>Return Attribution</CardTitle></CardHeader>
+                      <CardContent>
+                        <div className="space-y-3">
+                          <div className="flex justify-between"><span>Portfolio Return (TWR)</span><span className="font-bold text-green-600">68.0%</span></div>
+                          <div className="flex justify-between"><span>Benchmark Return</span><span className="font-bold">30.0%</span></div>
+                          <div className="flex justify-between border-t pt-2"><span className="font-medium">Alpha</span><span className="font-bold text-green-600">38.0%</span></div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </TabsContent>
       </Tabs>
 
       {/* Add/Edit Holding Modal */}
