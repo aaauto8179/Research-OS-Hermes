@@ -59,6 +59,14 @@ const TimeTracker = dynamic(() => import("./TimeTracker"), { loading: () => <Wid
 const KanbanBoard = dynamic(() => import("./KanbanBoard"), { loading: () => <WidgetSkeleton /> });
 const IdeaGeneration = dynamic(() => import("./IdeaGeneration"), { loading: () => <WidgetSkeleton /> });
 const ScreeningTable = dynamic(() => import("./ScreeningTable"), { loading: () => <WidgetSkeleton /> });
+const PortfolioFitCheck = dynamic(() => import("./PortfolioFitCheck"), { loading: () => <WidgetSkeleton /> });
+const ScenarioAnalysis = dynamic(() => import("./ScenarioAnalysis"), { loading: () => <WidgetSkeleton /> });
+const ConvictionSizing = dynamic(() => import("./ConvictionSizing"), { loading: () => <WidgetSkeleton /> });
+const ReverseDCF = dynamic(() => import("./ReverseDCF"), { loading: () => <WidgetSkeleton /> });
+const FilteredTable = dynamic(() => import("./FilteredTable"), { loading: () => <WidgetSkeleton /> });
+const MultiTextBox = dynamic(() => import("./MultiTextBox"), { loading: () => <WidgetSkeleton /> });
+const SimpleTextBox = dynamic(() => import("./SimpleTextBox"), { loading: () => <WidgetSkeleton /> });
+const UIPrimitives = dynamic(() => import("./UIPrimitives"), { loading: () => <WidgetSkeleton /> });
 
 function WidgetSkeleton() {
   return (
@@ -122,6 +130,14 @@ export const WIDGET_REGISTRY: Record<string, React.ComponentType<any>> = {
   "kanban-board": KanbanBoard,
   "idea-generation": IdeaGeneration,
   "screening-table": ScreeningTable,
+  "portfolio-fit-check": PortfolioFitCheck,
+  "scenario-analysis": ScenarioAnalysis,
+  "conviction-sizing": ConvictionSizing,
+  "reverse-dcf": ReverseDCF,
+  "filtered-table": FilteredTable,
+  "multi-text-box": MultiTextBox,
+  "simple-text-box": SimpleTextBox,
+  "ui-primitives": UIPrimitives,
 };
 
 export function WidgetRenderer({ type, props, ...rest }: { type: string; props?: any; [key: string]: any }) {

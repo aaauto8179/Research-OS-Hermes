@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import WatchlistManager from "@/components/widgets/WatchlistManager";
 import { 
   Search, Filter, ChevronDown, ChevronUp, 
   Plus, Eye, Download, Settings, AlertTriangle,
@@ -115,6 +116,7 @@ export default function WatchlistPage() {
           <TabsTrigger value="watchlist"><Star className="mr-2 h-4 w-4" /> Watchlist</TabsTrigger>
           <TabsTrigger value="alerts"><Bell className="mr-2 h-4 w-4" /> Alerts</TabsTrigger>
           <TabsTrigger value="builder"><Plus className="mr-2 h-4 w-4" /> Builder</TabsTrigger>
+          <TabsTrigger value="manager"><Settings className="mr-2 h-4 w-4" /> Manager</TabsTrigger>
         </TabsList>
 
         {/* Watchlist Tab */}

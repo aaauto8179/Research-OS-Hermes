@@ -10,6 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import MarketMetrics from "@/components/widgets/MarketMetrics";
+import MacroDashboard from "@/components/widgets/MacroDashboard";
 import { 
   Search, Filter, ChevronDown, ChevronUp, 
   Plus, Eye, Download, Settings, AlertTriangle,
@@ -104,12 +106,14 @@ export default function MacroPage() {
 
         {/* Market Metrics Tab */}
         <TabsContent value="market" className="flex-1 mt-4 space-y-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
-            {MARKET_METRICS.map(m => (
-              <MarketMetricCard key={m.code} metric={m} />
-            ))}
-          </div>
-        </TabsContent>
+                  <MarketMetrics />
+                  <MacroDashboard />
+                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                    {MARKET_METRICS.map(m => (
+                      <MarketMetricCard key={m.code} metric={m} />
+                    ))}
+                  </div>
+                </TabsContent>
 
         {/* Valuation History Tab */}
         <TabsContent value="valuation" className="flex-1 mt-4 space-y-4">

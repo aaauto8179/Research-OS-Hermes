@@ -28,6 +28,10 @@ import {
   ArrowLeft, Shield, Scale, Brain, Heart, AlertCircle
 } from "lucide-react";
 import { MOCK_COMPANIES } from "@/lib/mock-data";
+import PortfolioFitCheck from "@/components/widgets/PortfolioFitCheck";
+import ScenarioAnalysis from "@/components/widgets/ScenarioAnalysis";
+import ConvictionSizing from "@/components/widgets/ConvictionSizing";
+import ReverseDCF from "@/components/widgets/ReverseDCF";
 
 const BIASES = [
   { id: 1, name: "Confirmation Bias", question: "Did I actively seek out the strongest bear case from credible short-sellers or skeptical analysts?", evidence: "Provide at least 2 substantiated counter-arguments and explain why the market may be wrong." },
@@ -190,6 +194,7 @@ export default function WeighDecisionsPage() {
 
         {/* Portfolio Fit Tab */}
         <TabsContent value="fit" className="flex-1 mt-4 space-y-4">
+          <PortfolioFitCheck />
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <Card>
               <CardHeader><CardTitle>Sector Concentration Check</CardTitle></CardHeader>
@@ -367,6 +372,13 @@ export default function WeighDecisionsPage() {
 
         {/* Allocation Tab */}
         <TabsContent value="allocation" className="flex-1 mt-4 space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <ScenarioAnalysis />
+            <ReverseDCF />
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <ConvictionSizing />
+          </div>
           <Card>
             <CardHeader className="flex items-center justify-between">
               <CardTitle>Valuation & Allocation Discipline</CardTitle>

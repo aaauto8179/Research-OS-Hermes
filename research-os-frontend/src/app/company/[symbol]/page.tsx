@@ -6,7 +6,7 @@ import { WidgetRenderer } from "@/components/widgets/WidgetRegistry";
 const TAB_CONTENT: Record<string, string[]> = {
   overview: ["kpi-cards", "financial-charts", "valuation-summary", "risk-assessment"],
   story: ["financial-charts", "valuation-summary", "peer-comparison"],
-  management: ["ownership-analysis", "catalyst-tracker", "concall-consistency", "management-consistency", "smart-summarizer", "ai-assistant"],
+  management: ["ownership-analysis", "catalyst-tracker", "concall-consistency", "management-consistency", "document-viewer", "smart-summarizer", "ai-assistant"],
   governance: ["risk-assessment", "checklist", "risk-score", "beneish-m-score", "altman-z-score", "piotroski-f-score", "forensic-flags"],
   financials: ["financial-charts", "kpi-cards", "ratio-analysis", "common-size", "revenue-projection", "key-data-extractor"],
   valuation: ["valuation-summary", "revenue-projection", "dcf-valuation", "relative-valuation", "sotp-valuation", "banking-valuation", "excess-return-valuation"],

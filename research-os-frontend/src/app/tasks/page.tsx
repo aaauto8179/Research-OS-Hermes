@@ -29,6 +29,10 @@ import {
   Clock, Play, Pause, Timer, Trash2, Edit2
 } from "lucide-react";
 import { MOCK_COMPANIES } from "@/lib/mock-data";
+import KanbanBoard from "@/components/widgets/KanbanBoard";
+import TimeTracker from "@/components/widgets/TimeTracker";
+import TodoTracker from "@/components/widgets/TodoTracker";
+import FilteredTable from "@/components/widgets/FilteredTable";
 
 const MOCK_TASKS = [
   { id: "1", title: "Q1 FY25 Earnings Analysis - RELIANCE", description: "Analyze O2C crack spreads, Jio ARPU, Retail SSG", status: "IN_PROGRESS", priority: 1, assignee: "Analyst 1", due_date: "2024-07-20", estimated_hours: 8, actual_hours: 4.5, tags: ["EARNINGS", "O2C", "JIO"], related_company: "RELIANCE", stage: "RESEARCH" },
@@ -190,6 +194,7 @@ export default function TasksPage() {
           <TabsTrigger value="kanban"><Layers className="mr-2 h-4 w-4" /> Kanban</TabsTrigger>
           <TabsTrigger value="list"><ClipboardList className="mr-2 h-4 w-4" /> List</TabsTrigger>
           <TabsTrigger value="analytics"><BarChart2 className="mr-2 h-4 w-4" /> Analytics</TabsTrigger>
+          <TabsTrigger value="widgets"><Layers className="mr-2 h-4 w-4" /> Widgets</TabsTrigger>
         </TabsList>
 
         {/* Kanban Tab */}
@@ -390,6 +395,18 @@ export default function TasksPage() {
                 </div>
               </CardContent>
             </Card>
+          </div>
+        </TabsContent>
+
+        {/* Widgets Tab */}
+        <TabsContent value="widgets" className="flex-1 mt-4 space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <KanbanBoard />
+            <TimeTracker />
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <TodoTracker />
+            <FilteredTable title="Task Summary" />
           </div>
         </TabsContent>
       </Tabs>
