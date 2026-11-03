@@ -46,6 +46,7 @@ const BeneishMScore = dynamic(() => import("./BeneishMScore"), { loading: () => 
 const AltmanZScore = dynamic(() => import("./AltmanZScore"), { loading: () => <WidgetSkeleton /> });
 const PiotroskiFScore = dynamic(() => import("./PiotroskiFScore"), { loading: () => <WidgetSkeleton /> });
 const PortfolioAnalytics = dynamic(() => import("./PortfolioAnalytics"), { loading: () => <WidgetSkeleton /> });
+const ForensicFlags = dynamic(() => import("./ForensicFlags"), { loading: () => <WidgetSkeleton /> });
 
 function WidgetSkeleton() {
   return (
@@ -96,6 +97,7 @@ export const WIDGET_REGISTRY: Record<string, React.ComponentType<any>> = {
   "altman-z-score": AltmanZScore,
   "piotroski-f-score": PiotroskiFScore,
   "portfolio-analytics": PortfolioAnalytics,
+  "forensic-flags": ForensicFlags,
 };
 
 export function WidgetRenderer({ type, props, ...rest }: { type: string; props?: any; [key: string]: any }) {
