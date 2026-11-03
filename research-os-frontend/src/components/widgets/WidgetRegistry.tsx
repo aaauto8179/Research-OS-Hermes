@@ -49,6 +49,7 @@ const PortfolioAnalytics = dynamic(() => import("./PortfolioAnalytics"), { loadi
 const ForensicFlags = dynamic(() => import("./ForensicFlags"), { loading: () => <WidgetSkeleton /> });
 const ManagementConsistency = dynamic(() => import("./ManagementConsistency"), { loading: () => <WidgetSkeleton /> });
 const SmartSummarizer = dynamic(() => import("./SmartSummarizer"), { loading: () => <WidgetSkeleton /> });
+const KeyDataExtractor = dynamic(() => import("./KeyDataExtractor"), { loading: () => <WidgetSkeleton /> });
 
 function WidgetSkeleton() {
   return (
@@ -102,6 +103,7 @@ export const WIDGET_REGISTRY: Record<string, React.ComponentType<any>> = {
   "forensic-flags": ForensicFlags,
   "management-consistency": ManagementConsistency,
   "smart-summarizer": SmartSummarizer,
+  "key-data-extractor": KeyDataExtractor,
 };
 
 export function WidgetRenderer({ type, props, ...rest }: { type: string; props?: any; [key: string]: any }) {
