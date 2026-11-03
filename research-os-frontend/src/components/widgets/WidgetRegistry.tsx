@@ -50,6 +50,7 @@ const ForensicFlags = dynamic(() => import("./ForensicFlags"), { loading: () => 
 const ManagementConsistency = dynamic(() => import("./ManagementConsistency"), { loading: () => <WidgetSkeleton /> });
 const SmartSummarizer = dynamic(() => import("./SmartSummarizer"), { loading: () => <WidgetSkeleton /> });
 const KeyDataExtractor = dynamic(() => import("./KeyDataExtractor"), { loading: () => <WidgetSkeleton /> });
+const AIAssistant = dynamic(() => import("./AIAssistant"), { loading: () => <WidgetSkeleton /> });
 
 function WidgetSkeleton() {
   return (
@@ -104,6 +105,7 @@ export const WIDGET_REGISTRY: Record<string, React.ComponentType<any>> = {
   "management-consistency": ManagementConsistency,
   "smart-summarizer": SmartSummarizer,
   "key-data-extractor": KeyDataExtractor,
+  "ai-assistant": AIAssistant,
 };
 
 export function WidgetRenderer({ type, props, ...rest }: { type: string; props?: any; [key: string]: any }) {
