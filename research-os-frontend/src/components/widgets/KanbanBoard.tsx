@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Trash2, CheckCircle, AlertCircle, Calendar, Clock, User, Building2, DragHandle, GripVertical } from "lucide-react";
+import { Plus, Trash2, CheckCircle, AlertCircle, Calendar, Clock, User, Building2, GripVertical } from "lucide-react";
 
 interface KanbanBoardProps {
   tasks?: any[];

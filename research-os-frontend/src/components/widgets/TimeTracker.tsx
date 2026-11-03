@@ -118,41 +118,49 @@ export default function TimeTracker({ timeEntries: initialEntries = [], onEntryA
   const totalMinutes = entries.reduce((sum, e) => sum + (e.duration_minutes || 0), 0);
 
   // Timer content
-  const timerContent = activeTimer ? (
-    <div className="flex items-center justify-between">
+  const getTimerContent = () => {
+    if (activeTimer) {
+      return (
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Timer className="h-6 w-6 text-primary animate-pulse" />
+            <div>
+              <p className="font-medium">Active Timer</p>
+              <p className="text-sm text-muted-foreground">{activeTimer.category} • Task #{activeTimer.taskId}</p>
+            </div>
+            <div className="flex items-center gap-2 ml-auto">
+              <span className="text-2xl font-mono font-bold tabular-nums" style={{ fontSize: "1.5rem" }}>
+                {formatTime(Date.now() - activeTimer.startTime)}
+              </span>
+              <Button variant="destructive" onClick={stopTimer} className="h-10 px-4">
+                <Pause className="mr-2 h-4 w-4" /> Stop
+              </Button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    return (
       <div className="flex items-center gap-4">
-        <Timer className="h-6 w-6 text-primary animate-pulse" />
-        <div>
-          <p className="font-medium">Active Timer</p>
-          <p className="text-sm text-muted-foreground">{activeTimer.category} • Task #{activeTimer.taskId}</p>
+        <Timer className="h-6 w-6 text-muted-foreground" />
+        <div className="flex-1">
+          <p className="font-medium">No active timer</p>
+          <p className="text-sm text-muted-foreground">Start tracking time for a task</p>
         </div>
-        <div className="flex items-center gap-2 ml-auto">
-          <span className="text-2xl font-mono font-bold tabular-nums" style={{ fontSize: "1.5rem" }}>
-            {formatTime(Date.now() - activeTimer.startTime)}
-          </span>
-          <Button variant="destructive" onClick={stopTimer} className="h-10 px-4">
-            <Pause className="mr-2 h-4 w-4" /> Stop
-          </Button>
-        </div>
+        <Select value="Quarterly Results Analysis" onValueChange={v => startTimer(v, "1", "")} defaultValue="Quarterly Results Analysis">
+          <SelectTrigger className="w-48"><SelectValue placeholder="Select category" /></SelectTrigger>
+          <SelectContent>
+            {TIME_CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Button onClick={() => startTimer("Quarterly Results Analysis", "1", "")} className="h-10 px-4">
+          <Play className="mr-2 h-4 w-4" /> Start Timer
+        </Button>
       </div>
-    ) : (
-    <div className="flex items-center gap-4">
-      <Timer className="h-6 w-6 text-muted-foreground" />
-      <div className="flex-1">
-        <p className="font-medium">No active timer</p>
-        <p className="text-sm text-muted-foreground">Start tracking time for a task</p>
-      </div>
-      <Select value="Quarterly Results Analysis" onValueChange={v => startTimer(v, "1", "")} defaultValue="Quarterly Results Analysis">
-        <SelectTrigger className="w-48"><SelectValue placeholder="Select category" /></SelectTrigger>
-        <SelectContent>
-          {TIME_CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-        </SelectContent>
-      </Select>
-      <Button onClick={() => startTimer("Quarterly Results Analysis", "1", "")} className="h-10 px-4">
-        <Play className="mr-2 h-4 w-4" /> Start Timer
-      </Button>
-    </div>
-  );
+    );
+  };
+
+  const timerContent = getTimerContent();
 
 
   return (
@@ -165,49 +173,12 @@ export default function TimeTracker({ timeEntries: initialEntries = [], onEntryA
         </div>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col">
-        {/* Active Timer */}
-        <div className="mb-4 p-4 bg-muted/30 rounded-lg">
-          {activeTimer ? (
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <Timer className="h-6 w-6 text-primary animate-pulse" />
-                <div>
-                  <p className="font-medium">Active Timer</p>
-                  <p className="text-sm text-muted-foreground">{activeTimer.category} • Task #{activeTimer.taskId}</p>
-                </div>
-                <div className="flex items-center gap-2 ml-auto">
-                  <span className="text-2xl font-mono font-bold tabular-nums" style={{ fontSize: "1.5rem" }}>
-                    {(() => {
-                      const elapsed = Date.now() - activeTimer.startTime;
-                      return formatTime(elapsed);
-                    })()}
-                  </span>
-                  <Button variant="destructive" onClick={stopTimer} className="h-10 px-4">
-                    <Pause className="mr-2 h-4 w-4" /> Stop
-                  </Button>
-                </div>
+              {/* Active Timer */}
+              <div className="mb-4 p-4 bg-muted/30 rounded-lg">
+                {timerContent}
               </div>
-            ) : (
-              <div className="flex items-center gap-4">
-                <Timer className="h-6 w-6 text-muted-foreground" />
-                <div className="flex-1">
-                  <p className="font-medium">No active timer</p>
-                  <p className="text-sm text-muted-foreground">Start tracking time for a task</p>
-                </div>
-                <Select value="Quarterly Results Analysis" onValueChange={v => startTimer(v, "1", "")} defaultValue="Quarterly Results Analysis">
-                  <SelectTrigger className="w-48"><SelectValue placeholder="Select category" /></SelectTrigger>
-                  <SelectContent>
-                    {TIME_CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-                <Button onClick={() => startTimer("Quarterly Results Analysis", "1", "")} className="h-10 px-4">
-                  <Play className="mr-2 h-4 w-4" /> Start Timer
-                </Button>
-              </div>
-            )}
-          </div>
 
-          {/* Manual Entry */}
+              {/* Manual Entry */}
           <div className="mb-4">
             <div className="flex items-center justify-between mb-2">
               <span className="font-medium">Manual Time Entry</span>
