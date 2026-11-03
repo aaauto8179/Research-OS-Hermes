@@ -51,6 +51,8 @@ const ManagementConsistency = dynamic(() => import("./ManagementConsistency"), {
 const SmartSummarizer = dynamic(() => import("./SmartSummarizer"), { loading: () => <WidgetSkeleton /> });
 const KeyDataExtractor = dynamic(() => import("./KeyDataExtractor"), { loading: () => <WidgetSkeleton /> });
 const AIAssistant = dynamic(() => import("./AIAssistant"), { loading: () => <WidgetSkeleton /> });
+const MarketMetrics = dynamic(() => import("./MarketMetrics"), { loading: () => <WidgetSkeleton /> });
+const MacroDashboard = dynamic(() => import("./MacroDashboard"), { loading: () => <WidgetSkeleton /> });
 
 function WidgetSkeleton() {
   return (
@@ -106,6 +108,8 @@ export const WIDGET_REGISTRY: Record<string, React.ComponentType<any>> = {
   "smart-summarizer": SmartSummarizer,
   "key-data-extractor": KeyDataExtractor,
   "ai-assistant": AIAssistant,
+  "market-metrics": MarketMetrics,
+  "macro-dashboard": MacroDashboard,
 };
 
 export function WidgetRenderer({ type, props, ...rest }: { type: string; props?: any; [key: string]: any }) {
