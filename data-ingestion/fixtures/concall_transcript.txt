@@ -1,0 +1,24 @@
+TRANSCRIPT: Reliance Industries Limited Q4 FY2023-24 Earnings Conference Call
+Date: April 22, 2024
+Participants:
+- Mukesh Ambani, Chairman & Managing Director
+- Srikanth Venkatachari, Chief Financial Officer
+- V. Srikanth, Joint Chief Financial Officer
+- Pinakin Parekh, Analyst, J.P. Morgan
+- Amit Rustagi, Analyst, UBS Securities
+
+Operator: Good evening, ladies and gentlemen. Welcome to the Reliance Industries Limited Q4 FY24 Earnings Conference Call. As a reminder, all participant lines will be in listen-only mode and there will be an opportunity for you to ask questions after the presentation concludes. I now hand the conference over to Mr. Srikanth Venkatachari, CFO of Reliance Industries.
+
+Srikanth Venkatachari (CFO): Thank you, and welcome everyone. I am pleased to share that Reliance delivered resilient financial performance in FY24 with consolidated EBITDA of INR 178,677 Crores, representing 16.1% YoY growth. Consumer businesses, retail and telecom, contributed over 48% of total segment EBITDA. Our Oil-to-Chemicals (O2C) segment maintained robust operating rates despite volatile global refining margins. Capex for the fiscal year stood at INR 131,769 Crores, primarily focused on 5G network rollout and expansion in our retail stores footprint.
+
+Operator: Thank you. We will now open the floor for questions. Our first question is from Pinakin Parekh from J.P. Morgan.
+
+Pinakin Parekh (Analyst): Thank you for taking my question. Could you give us more granularity on net debt levels at year end and the capex trajectory for FY25 across retail and new energy initiatives?
+
+Srikanth Venkatachari (CFO): Pinakin, thank you. Our net debt at the end of March 2024 stood at INR 112,278 Crores. We expect capital expenditure to moderate substantially in FY25 now that our pan-India 5G deployment is complete. New Energy investments in solar giga-factories in Jamnagar will scale in H2 FY25.
+
+Operator: The next question is from Amit Rustagi from UBS.
+
+Amit Rustagi (Analyst): My question relates to ARPU growth in Jio. When do we anticipate tariff adjustments translating into higher ARPU?
+
+V. Srikanth (Joint CFO): On the telecom side, monthly churn remains best-in-class at 1.7%, and data consumption per subscriber exceeded 28 GB per month. Tariff rationalization will follow customer adoption of unlimited 5G services as spectrum utilization peaks.

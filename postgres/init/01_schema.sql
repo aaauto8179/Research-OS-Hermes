@@ -33,7 +33,13 @@ CREATE TABLE documents (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     company_id UUID REFERENCES companies(id) ON DELETE SET NULL,
     title VARCHAR(500) NOT NULL,
-    doc_type VARCHAR(50) NOT NULL,                -- ANNUAL_REPORT, CONCALL_TRANSCRIPT, INVESTOR_PRESENTATION, QUARTERLY_RESULT, CREDIT_RATING, NEWS, OTHER
+    doc_type VARCHAR(50) NOT NULL CHECK (doc_type IN (
+        'ANNUAL_REPORT', 'CONCALL_TRANSCRIPT', 'INVESTOR_PRESENTATION', 
+        'QUARTERLY_RESULT', 'CREDIT_RATING', 'SCREENER_EXCEL', 'BSE_CSV', 
+        'IMAGE_SCAN', 'EXCHANGE_ANNOUNCEMENT', 'URL_LINK', 'UNSTRUCTURED_NOTE', 
+        'SCREENER_EXPORT', 'BSE_EXPORT', 'NSE_EXPORT', 'EXCEL_MODEL', 'WEB_LINK', 
+        'RESEARCH_REPORT', 'NEWS', 'OTHER'
+    )),
     source VARCHAR(100),                          -- SCREENER, BSE, NSE, COMPANY_WEBSITE, MANUAL_UPLOAD, LINK
     source_url TEXT,
     file_path TEXT,                               -- local path or object storage key
@@ -48,6 +54,10 @@ CREATE TABLE documents (
     parsed_status VARCHAR(20) DEFAULT 'PENDING',  -- PENDING, PARSING, PARSED, FAILED
     parsed_at TIMESTAMPTZ,
     parsing_error TEXT,
+    content_text TEXT,                            -- extracted text from PDF/webpage/OCR
+    ocr_engine VARCHAR(50),                       -- extractor / OCR model name
+    sheet_names TEXT[],                           -- Excel sheet names
+    crawl_status VARCHAR(20) DEFAULT 'COMPLETED', -- URL crawl status
     meta JSONB DEFAULT '{}',
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -59,7 +69,7 @@ CREATE INDEX idx_documents_fiscal ON documents(fiscal_year, fiscal_quarter);
 CREATE INDEX idx_documents_hash ON documents(file_hash);
 CREATE INDEX idx_documents_trgm ON documents USING gin(title gin_trgm_ops);
 
--- Document chunks (for RAG)
+-- Document chunks (for RAG & visual/cell-level citations)
 CREATE TABLE document_chunks (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     document_id UUID NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
@@ -68,9 +78,14 @@ CREATE TABLE document_chunks (
     content_hash VARCHAR(64),
     token_count INT,
     embedding vector(1024),                       -- BGE-M3 = 1024 dims
-    chunk_type VARCHAR(30),                       -- TEXT, TABLE, CHART, HEADER, FOOTNOTE
+    chunk_type VARCHAR(30),                       -- TEXT, TABLE, CHART, HEADER, FOOTNOTE, EXCEL_SHEET, EXCEL_ROW, EXCEL_CELL, OCR_BOX, IMAGE_REGION
     page_number INT,
     bbox JSONB,                                   -- {x1, y1, x2, y2} for visual grounding
+    sheet_name VARCHAR(100),                      -- Excel sheet name
+    cell_range VARCHAR(50),                       -- Excel cell range (e.g., B12:M12)
+    structured_data JSONB DEFAULT '{}',           -- Parsed 2D grid/table payload
+    ocr_confidence NUMERIC(5, 4),                 -- OCR / extraction confidence (0.0000 to 1.0000)
+    confidence NUMERIC(5, 4),                     -- Alias score for compatibility
     meta JSONB DEFAULT '{}',
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -231,7 +246,7 @@ CREATE TABLE company_analysis (
     UNIQUE (company_id)
 );
 
--- Financials (Statements, Projections, Common Size)
+-- Financials (Statements, Projections, Common Size) [Legacy JSON Store]
 CREATE TABLE company_financials (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
@@ -244,6 +259,60 @@ CREATE TABLE company_financials (
     updated_at TIMESTAMPTZ DEFAULT NOW(),
     UNIQUE (company_id)
 );
+
+-- ============================================
+-- NORMALIZED FINANCIAL STATEMENTS (Milestone 1)
+-- Two-Tier Model: Statement Header/Period + Granular Line Items
+-- ============================================
+
+-- Financial Statements (Header / Period Entity across P&L, Balance Sheet, Cash Flow)
+CREATE TABLE financial_statements (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+    statement_type VARCHAR(20) NOT NULL CHECK (statement_type IN ('PL', 'BS', 'CF')),
+    period_type VARCHAR(20) NOT NULL DEFAULT 'ANNUAL' CHECK (period_type IN ('ANNUAL', 'QUARTERLY', 'TTM')),
+    fiscal_year INT NOT NULL,
+    fiscal_quarter VARCHAR(10) NOT NULL DEFAULT 'FY' CHECK (fiscal_quarter IN ('FY', 'Q1', 'Q2', 'Q3', 'Q4', 'TTM')),
+    period_start_date DATE,
+    period_end_date DATE NOT NULL,
+    filing_date DATE,
+    currency VARCHAR(10) DEFAULT 'INR',
+    unit VARCHAR(20) DEFAULT 'INR_CRORES',
+    is_consolidated BOOLEAN DEFAULT TRUE,
+    is_audited BOOLEAN DEFAULT TRUE,
+    restatement_version INT DEFAULT 0,
+    source_document_id UUID REFERENCES documents(id) ON DELETE SET NULL,
+    metadata JSONB DEFAULT '{}',
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    CONSTRAINT uq_statement UNIQUE (company_id, statement_type, period_type, fiscal_year, fiscal_quarter, is_consolidated, restatement_version)
+);
+
+CREATE INDEX idx_fin_stmt_lookup ON financial_statements(company_id, statement_type, fiscal_year);
+CREATE INDEX idx_fin_stmt_doc ON financial_statements(source_document_id);
+
+-- Granular Financial Statement Line Items (Reported values in INR Crores with citation link)
+CREATE TABLE financial_line_items (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    statement_id UUID NOT NULL REFERENCES financial_statements(id) ON DELETE CASCADE,
+    line_item_code VARCHAR(100) NOT NULL,
+    line_item_name VARCHAR(255) NOT NULL,
+    category VARCHAR(100) NOT NULL,
+    value NUMERIC(20, 4) NOT NULL,
+    display_order INT NOT NULL DEFAULT 0,
+    indent_level INT DEFAULT 0,
+    is_calculated BOOLEAN DEFAULT FALSE,
+    citation_chunk_id UUID REFERENCES document_chunks(id) ON DELETE SET NULL,
+    citation_meta JSONB DEFAULT '{}',
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    CONSTRAINT uq_statement_line_item UNIQUE (statement_id, line_item_code)
+);
+
+CREATE INDEX idx_fin_line_stmt_code ON financial_line_items(statement_id, line_item_code);
+CREATE INDEX idx_fin_line_stmt ON financial_line_items(statement_id);
+CREATE INDEX idx_fin_line_code ON financial_line_items(line_item_code);
+CREATE INDEX idx_fin_line_citation ON financial_line_items(citation_chunk_id);
 
 -- SME / Forensics
 CREATE TABLE company_sme (
@@ -271,6 +340,84 @@ CREATE TABLE company_downsides (
     updated_at TIMESTAMPTZ DEFAULT NOW(),
     UNIQUE (company_id)
 );
+
+-- ============================================
+-- SCENARIO MODELING & PROJECTIONS (Milestone 2)
+-- Base Case, Bull Case, Bear Case Scenario Persistence
+-- ============================================
+
+-- Scenarios (Base Case, Bull Case, Bear Case, Custom)
+CREATE TABLE scenarios (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+    name VARCHAR(100) NOT NULL,
+    scenario_type VARCHAR(50) DEFAULT 'BASE' CHECK (scenario_type IN ('BASE', 'BULL', 'BEAR', 'CUSTOM')),
+    description TEXT,
+    base_year INT NOT NULL,
+    forecast_years INT DEFAULT 5,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_by VARCHAR(100) DEFAULT 'ANALYST',
+    metadata JSONB DEFAULT '{}',
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    CONSTRAINT uq_company_scenario_name UNIQUE (company_id, name)
+);
+
+CREATE INDEX idx_scenarios_company ON scenarios(company_id);
+
+-- Scenario Driver Assumptions
+CREATE TABLE scenario_assumptions (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    scenario_id UUID NOT NULL REFERENCES scenarios(id) ON DELETE CASCADE,
+    driver_key VARCHAR(100) NOT NULL,
+    year INT NOT NULL,
+    value NUMERIC(10, 4) NOT NULL,
+    category VARCHAR(50) CHECK (category IS NULL OR category IN ('REVENUE', 'MARGIN', 'TAX', 'CAPEX', 'WORKING_CAPITAL', 'WACC')),
+    unit VARCHAR(30) DEFAULT 'PERCENTAGE',
+    rationale TEXT,
+    citation_chunk_id UUID REFERENCES document_chunks(id) ON DELETE SET NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    CONSTRAINT uq_scenario_assumption UNIQUE (scenario_id, driver_key, year)
+);
+
+CREATE INDEX idx_scenario_assumptions_scen ON scenario_assumptions(scenario_id);
+CREATE INDEX idx_scen_assump_citation ON scenario_assumptions(citation_chunk_id);
+
+-- Scenario Segment Breakdown Projections
+CREATE TABLE scenario_segment_projections (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    scenario_id UUID NOT NULL REFERENCES scenarios(id) ON DELETE CASCADE,
+    segment_name VARCHAR(150) NOT NULL,
+    year INT NOT NULL,
+    revenue NUMERIC(20, 4) NOT NULL,
+    margin NUMERIC(10, 4),
+    growth_rate_pct NUMERIC(10, 4),
+    projected_ebitda NUMERIC(20, 4),
+    driver_breakdown JSONB DEFAULT '[]',
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    CONSTRAINT uq_scen_seg_year UNIQUE (scenario_id, segment_name, year)
+);
+
+CREATE INDEX idx_scen_seg_scen ON scenario_segment_projections(scenario_id);
+CREATE INDEX idx_scen_seg_proj ON scenario_segment_projections(scenario_id, segment_name);
+
+-- Scenario Consolidated Projections
+CREATE TABLE scenario_projections (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    scenario_id UUID NOT NULL REFERENCES scenarios(id) ON DELETE CASCADE,
+    metric_key VARCHAR(100) NOT NULL,
+    year INT NOT NULL,
+    projected_value NUMERIC(20, 4) NOT NULL,
+    metadata JSONB DEFAULT '{}',
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    CONSTRAINT uq_scen_proj_metric_year UNIQUE (scenario_id, metric_key, year)
+);
+
+CREATE INDEX idx_scen_proj_scen ON scenario_projections(scenario_id);
+CREATE INDEX idx_scen_proj_lookup ON scenario_projections(scenario_id, metric_key, year);
 
 -- ============================================
 -- WEIGH DECISIONS
@@ -579,3 +726,9 @@ CREATE TRIGGER update_holdings_updated_at BEFORE UPDATE ON holdings FOR EACH ROW
 CREATE TRIGGER update_industries_updated_at BEFORE UPDATE ON industries FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_watchlists_updated_at BEFORE UPDATE ON watchlists FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_tasks_updated_at BEFORE UPDATE ON tasks FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_financial_statements_updated_at BEFORE UPDATE ON financial_statements FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_financial_line_items_updated_at BEFORE UPDATE ON financial_line_items FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_scenarios_updated_at BEFORE UPDATE ON scenarios FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_scenario_assumptions_updated_at BEFORE UPDATE ON scenario_assumptions FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_scenario_segment_projections_updated_at BEFORE UPDATE ON scenario_segment_projections FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_scenario_projections_updated_at BEFORE UPDATE ON scenario_projections FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
