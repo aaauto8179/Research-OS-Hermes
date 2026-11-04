@@ -236,6 +236,7 @@ class SOTPOutputs:
     equity_value: float
     fair_value_per_share: float
     segment_contributions: Dict[str, float]
+    holdco_sensitivity: List[Dict[str, float]] = field(default_factory=list)
     inputs_hash: str = ""
     calculation_timestamp: str = ""
 
@@ -705,7 +706,10 @@ class SOTPEngine(DeterministicCalculator):
         total_equity_value = 0.0
         segment_contributions = {}
         holdco_discount = inputs.holdco_discount if hasattr(inputs, 'holdco_discount') else 0.0
-
+        
+        # Track raw segment values for sensitivity analysis
+        ev_segment_contributions = []  # (name, raw_value_before_holdco, stake_pct, seg_holdco, valuation_level)
+        
         for seg in inputs.segments:
             method = seg.get('method', 'EV_EBITDA')
             metric = seg.get('metric', seg.get('value', 0))
@@ -714,21 +718,24 @@ class SOTPEngine(DeterministicCalculator):
             valuation_level = seg.get('valuation_level', 'ENTERPRISE_VALUE')
             stake_pct = seg.get('effective_stake_pct', 100.0) / 100.0
             seg_holdco = seg.get('holdco_discount', holdco_discount)
-
+            
             seg_value_raw = metric * multiple * (1 - discount)
             # Apply ownership stake and holdco discount
             seg_contributed = seg_value_raw * stake_pct * (1 - seg_holdco)
-
+            
             if valuation_level == 'ENTERPRISE_VALUE':
                 seg_ev = seg_contributed
                 total_ev += seg_ev
+                ev_segment_contributions.append((seg.get('name', 'Unknown'), seg_value_raw, stake_pct, seg_holdco, valuation_level))
             elif valuation_level == 'EQUITY_VALUE':
                 seg_ev = 0.0
                 total_equity_value += seg_contributed
+                ev_segment_contributions.append((seg.get('name', 'Unknown'), seg_value_raw, stake_pct, seg_holdco, valuation_level))
             else:
                 seg_ev = seg_contributed
                 total_ev += seg_ev
-
+                ev_segment_contributions.append((seg.get('name', 'Unknown'), seg_value_raw, stake_pct, seg_holdco, valuation_level))
+            
             seg_value = {
                 'name': seg.get('name', 'Unknown'),
                 'method': method,
@@ -736,29 +743,77 @@ class SOTPEngine(DeterministicCalculator):
                 'multiple': multiple,
                 'discount': discount,
                 'valuation_level': valuation_level,
-                'effective_stake_pct': stake_pct * 100,
+                'effective_stake_pct': round(stake_pct * 100, 2),
                 'holdco_discount': seg_holdco,
-                'ev': seg_ev,
-                'contributed_value': seg_contributed,
+                'ev': round(seg_ev, 2),
+                'contributed_value': round(seg_contributed, 2),
             }
             segment_values.append(seg_value)
-            segment_contributions[seg.get('name', 'Unknown')] = seg_contributed
-
-        # Bridge: EV segments subtract consolidated net debt; Equity segments subtract only parent standalone debt
-        parent_standalone_debt = inputs.parent_standalone_debt if hasattr(inputs, 'parent_standalone_debt') else inputs.net_debt
-        equity_value = total_ev - inputs.net_debt + inputs.cash - inputs.minority_interest + total_equity_value - parent_standalone_debt
-        fair_value_per_share = equity_value / inputs.diluted_shares if inputs.diluted_shares > 0 else 0
+            segment_contributions[seg.get('name', 'Unknown')] = round(seg_contributed, 2)
         
+                # Bridge: EV segments subtract consolidated net debt; Equity segments subtract only parent standalone debt
+        parent_standalone_debt = inputs.parent_standalone_debt if hasattr(inputs, 'parent_standalone_debt') else inputs.net_debt
+        
+        # EV bridge: only subtract consolidated net debt if there are EV segments
+        if total_ev > 0:
+            ev_equity = total_ev - inputs.net_debt + inputs.cash - inputs.minority_interest
+        else:
+            # No EV segments: equity value comes only from equity segments
+            ev_equity = 0.0
+        
+        # Equity segments contribute directly, subtract parent standalone debt only
+        equity_equity = total_equity_value - parent_standalone_debt
+        
+        equity_value = ev_equity + equity_equity
+        fair_value_per_share = round(equity_value / inputs.diluted_shares, 2) if inputs.diluted_shares > 0 else 0
+        
+        # Holdco discount sensitivity table (20%-60%)
+        holdco_sensitivity = []
+        for hd in [0.20, 0.30, 0.40, 0.50, 0.60]:
+            # Recalculate with this holdco discount
+            total_ev_hd = 0.0
+            total_equity_value_hd = 0.0
+            for seg in inputs.segments:
+                method = seg.get('method', 'EV_EBITDA')
+                metric = seg.get('metric', seg.get('value', 0))
+                multiple = seg.get('multiple', 0)
+                discount = seg.get('conglomerate_discount', 0)
+                valuation_level = seg.get('valuation_level', 'ENTERPRISE_VALUE')
+                stake_pct = seg.get('effective_stake_pct', 100.0) / 100.0
+                seg_holdco = hd  # Use sensitivity holdco discount
+                
+                seg_value_raw = metric * multiple * (1 - seg.get('conglomerate_discount', 0))
+                seg_contributed = seg_value_raw * stake_pct * (1 - seg_holdco)
+                
+                if valuation_level == 'ENTERPRISE_VALUE':
+                    total_ev_hd += seg_contributed
+                elif valuation_level == 'EQUITY_VALUE':
+                    total_equity_value_hd += seg_contributed
+            
+            parent_standalone_debt = inputs.parent_standalone_debt if hasattr(inputs, 'parent_standalone_debt') else inputs.net_debt
+            equity_value_hd = total_ev_hd - inputs.net_debt + inputs.cash - inputs.minority_interest + total_equity_value_hd - parent_standalone_debt
+            fair_value_per_share_hd = equity_value_hd / inputs.diluted_shares if inputs.diluted_shares > 0 else 0
+            
+            holdco_sensitivity.append({
+                'holdco_discount': hd,
+                'equity_value': round(equity_value_hd, 2),
+                'fair_value_per_share': round(fair_value_per_share_hd, 2)
+            })
+
         return SOTPOutputs(
             segment_values=segment_values,
-            total_ev=total_ev,
-            equity_value=equity_value,
+            total_ev=round(total_ev, 2),
+            equity_value=round(equity_value, 2),
             fair_value_per_share=fair_value_per_share,
             segment_contributions=segment_contributions,
+            holdco_sensitivity=holdco_sensitivity,
             inputs_hash=self._hash_inputs(inputs),
             calculation_timestamp=datetime.now().isoformat()
         )
 
+# ============================================================
+# BANKING VALUATION ENGINE
+# ============================================================
 # ============================================================
 # BANKING VALUATION ENGINE
 # ============================================================
@@ -2196,6 +2251,8 @@ class CommonSizeInputs:
     depreciation: float = 0.0
     ebit: float = 0.0
     interest: float = 0.0
+    interest_on_borrowings: float = 0.0      # Interest on borrowings (for Ind AS 116 separation)
+    interest_on_lease_liabilities: float = 0.0  # Interest accretion on lease liabilities (Ind AS 116)
     pbt: float = 0.0
     tax: float = 0.0
     pat: float = 0.0
@@ -2244,10 +2301,12 @@ class CommonSizeEngine(DeterministicCalculator):
             pnl_cs['ebitda_pct'] = inputs.ebitda / pnl_base * 100
             pnl_cs['depreciation_pct'] = inputs.depreciation / pnl_base * 100
             pnl_cs['ebit_pct'] = inputs.ebit / pnl_base * 100
-            pnl_cs['interest_pct'] = inputs.interest / pnl_base * 100
             # Ind AS 116: separate interest on borrowings vs lease accretion
-            pnl_cs['interest_on_borrowings_pct'] = inputs.interest / pnl_base * 100
-            pnl_cs['interest_lease_accretion_pct'] = 0.0  # Placeholder for Ind AS 116 separation
+            interest_on_borrowings = inputs.interest_on_borrowings if inputs.interest_on_borrowings > 0 else inputs.interest
+            interest_on_lease = inputs.interest_on_lease_liabilities
+            pnl_cs['interest_pct'] = inputs.interest / pnl_base * 100
+            pnl_cs['interest_on_borrowings_pct'] = interest_on_borrowings / pnl_base * 100
+            pnl_cs['interest_lease_accretion_pct'] = interest_on_lease / pnl_base * 100
             pnl_cs['pbt_pct'] = inputs.pbt / pnl_base * 100
             pnl_cs['tax_pct'] = inputs.tax / pnl_base * 100
             pnl_cs['pat_pct'] = inputs.pat / pnl_base * 100

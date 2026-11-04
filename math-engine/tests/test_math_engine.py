@@ -353,6 +353,268 @@ class TestSOTPEngine:
         assert out1.equity_value == out2.equity_value
         assert out1.fair_value_per_share == out2.fair_value_per_share
 
+    # ============================================================
+    # AUDIT REQUIREMENTS TESTS
+    # ============================================================
+
+    def test_sotp_valuation_level_enterprise_value(self):
+        """ENTERPRISE_VALUE segments contribute to EV and get consolidated net debt subtracted"""
+        inputs = SOTPInputs(
+            segments=[
+                {'name': 'O2C', 'metric': 450000, 'multiple': 1.0, 'method': 'EV_EBITDA', 
+                 'valuation_level': 'ENTERPRISE_VALUE', 'effective_stake_pct': 100.0, 'holdco_discount': 0.0},
+                {'name': 'Retail', 'metric': 350000, 'multiple': 1.0, 'method': 'EV_EBITDA', 
+                 'valuation_level': 'ENTERPRISE_VALUE', 'effective_stake_pct': 67.0, 'holdco_discount': 0.30},
+            ],
+            net_debt=380000.0,
+            cash=180000.0,
+            minority_interest=0.0,
+            diluted_shares=676.5,
+            parent_standalone_debt=50000.0,
+            holdco_discount=0.30
+        )
+        
+        engine = SOTPEngine()
+        outputs = engine.calculate(inputs)
+        
+        # O2C: 450000 * 1.0 * (1-0) * 1.0 = 450000
+        # Retail: 350000 * 1.0 * (1-0.30) * 0.67 = 350000 * 0.7 * 0.67 = 164150
+        # Total EV = 450000 + 164150 = 614150
+        # Equity = Total EV - net_debt + cash - minority_interest = 614150 - 380000 + 180000 - 0 = 414150
+        # FV/share = 414150 / 676.5 = 612.2
+        
+        assert outputs.total_ev == 614150.0
+        # Verify segment values
+        seg_names = [s['name'] for s in outputs.segment_values]
+        assert 'O2C' in seg_names
+        assert 'Retail' in seg_names
+        
+        # Check O2C contributed value
+        o2c_seg = next(s for s in outputs.segment_values if s['name'] == 'O2C')
+        assert o2c_seg['contributed_value'] == 450000.0
+        assert o2c_seg['valuation_level'] == 'ENTERPRISE_VALUE'
+        
+        # Check Retail contributed value
+        retail_seg = next(s for s in outputs.segment_values if s['name'] == 'Retail')
+        assert retail_seg['contributed_value'] == 164150.0
+        assert retail_seg['valuation_level'] == 'ENTERPRISE_VALUE'
+
+    def test_sotp_valuation_level_equity_value(self):
+        """EQUITY_VALUE segments contribute directly to equity value, subtract parent standalone debt"""
+        inputs = SOTPInputs(
+            segments=[
+                {'name': 'Upstream', 'metric': 80000, 'multiple': 1.0, 'method': 'EV_EBITDA', 
+                 'valuation_level': 'EQUITY_VALUE', 'effective_stake_pct': 100.0, 'holdco_discount': 0.0},
+            ],
+            net_debt=380000.0,
+            cash=180000.0,
+            minority_interest=0.0,
+            diluted_shares=676.5,
+            parent_standalone_debt=50000.0,
+            holdco_discount=0.30
+        )
+        
+        engine = SOTPEngine()
+        outputs = engine.calculate(inputs)
+        
+        # Upstream: 80000 * 1.0 * (1-0) * 1.0 = 80000 (equity value contribution)
+        # Total EV = 0 (no EV segments)
+        # Equity = Total EV + equity_segment_contributions - parent_standalone_debt = 0 + 80000 - 50000 = 30000
+        # FV/share = 30000 / 676.5 = 44.3
+        
+        assert outputs.total_ev == 0.0
+        assert outputs.equity_value == 30000.0
+        assert abs(outputs.fair_value_per_share - 44.3) < 1.0
+
+    def test_sotp_mixed_valuation_levels(self):
+        """Mixed EV and Equity segments with proper debt bridge"""
+        inputs = SOTPInputs(
+            segments=[
+                {'name': 'O2C', 'metric': 450000, 'multiple': 1.0, 'method': 'EV_EBITDA', 
+                 'valuation_level': 'ENTERPRISE_VALUE', 'effective_stake_pct': 100.0, 'holdco_discount': 0.0},
+                {'name': 'Retail', 'metric': 350000, 'multiple': 1.0, 'method': 'EV_EBITDA', 
+                 'valuation_level': 'ENTERPRISE_VALUE', 'effective_stake_pct': 67.0, 'holdco_discount': 0.30},
+                {'name': 'Upstream', 'metric': 80000, 'multiple': 1.0, 'method': 'EV_EBITDA', 
+                 'valuation_level': 'EQUITY_VALUE', 'effective_stake_pct': 100.0, 'holdco_discount': 0.0},
+            ],
+            net_debt=380000.0,
+            cash=180000.0,
+            minority_interest=0.0,
+            diluted_shares=676.5,
+            parent_standalone_debt=50000.0,
+            holdco_discount=0.30
+        )
+        
+        engine = SOTPEngine()
+        outputs = engine.calculate(inputs)
+        
+        # EV segments: O2C=450000, Retail=164150 → Total EV = 614150
+        # Equity segments: Upstream=80000
+        # Equity = Total EV - net_debt + cash - minority_interest + equity_segments - parent_standalone_debt
+        # Equity = 614150 - 380000 + 180000 - 0 + 80000 - 50000 = 444150
+        # FV/share = 444150 / 676.5 = 656.5
+        
+        assert outputs.total_ev == 614150.0
+        assert outputs.equity_value == 444150.0
+        assert abs(outputs.fair_value_per_share - 656.5) < 1.0
+
+    def test_sotp_effective_stake_pct(self):
+        """effective_stake_pct correctly reduces segment contribution"""
+        inputs = SOTPInputs(
+            segments=[
+                {'name': 'Jio', 'metric': 500000, 'multiple': 1.0, 'method': 'EV_EBITDA', 
+                 'valuation_level': 'ENTERPRISE_VALUE', 'effective_stake_pct': 67.0, 'holdco_discount': 0.30},
+            ],
+            net_debt=200000.0,
+            cash=50000.0,
+            minority_interest=0.0,
+            diluted_shares=1000.0,
+            parent_standalone_debt=0.0,
+            holdco_discount=0.30
+        )
+        
+        engine = SOTPEngine()
+        outputs = engine.calculate(inputs)
+        
+        # 500000 * 1.0 * (1-0.30) * 0.67 = 500000 * 0.7 * 0.67 = 234500
+        assert outputs.total_ev == 234500.0
+        jio_seg = next(s for s in outputs.segment_values if s['name'] == 'Jio')
+        assert jio_seg['effective_stake_pct'] == 67.0
+        assert jio_seg['holdco_discount'] == 0.30
+        assert jio_seg['contributed_value'] == 234500.0
+
+    def test_sotp_holdco_discount_per_segment(self):
+        """Each segment has its own holdco_discount"""
+        inputs = SOTPInputs(
+            segments=[
+                {'name': 'SegA', 'metric': 100000, 'multiple': 1.0, 'method': 'EV_EBITDA', 
+                 'valuation_level': 'ENTERPRISE_VALUE', 'effective_stake_pct': 100.0, 'holdco_discount': 0.10},
+                {'name': 'SegB', 'metric': 100000, 'multiple': 1.0, 'method': 'EV_EBITDA', 
+                 'valuation_level': 'ENTERPRISE_VALUE', 'effective_stake_pct': 100.0, 'holdco_discount': 0.20},
+                {'name': 'SegC', 'metric': 100000, 'multiple': 1.0, 'method': 'EV_EBITDA', 
+                 'valuation_level': 'ENTERPRISE_VALUE', 'effective_stake_pct': 100.0, 'holdco_discount': 0.40},
+            ],
+            net_debt=0.0,
+            cash=0.0,
+            minority_interest=0.0,
+            diluted_shares=100.0,
+            parent_standalone_debt=0.0,
+            holdco_discount=0.30  # Global default, shouldn't override segment-specific
+        )
+        
+        engine = SOTPEngine()
+        outputs = engine.calculate(inputs)
+        
+        # SegA: 100000 * 0.9 = 90000
+        # SegB: 100000 * 0.8 = 80000
+        # SegC: 100000 * 0.6 = 60000
+        # Total = 230000
+        
+        assert outputs.total_ev == 230000.0
+        seg_a = next(s for s in outputs.segment_values if s['name'] == 'SegA')
+        seg_b = next(s for s in outputs.segment_values if s['name'] == 'SegB')
+        seg_c = next(s for s in outputs.segment_values if s['name'] == 'SegC')
+        assert seg_a['contributed_value'] == 90000.0
+        assert seg_b['contributed_value'] == 80000.0
+        assert seg_c['contributed_value'] == 60000.0
+
+    def test_sotp_holdco_sensitivity_table(self):
+        """Global holdco discount sensitivity table (20%-60%)"""
+        inputs = SOTPInputs(
+            segments=[
+                {'name': 'O2C', 'metric': 450000, 'multiple': 1.0, 'method': 'EV_EBITDA', 
+                 'valuation_level': 'ENTERPRISE_VALUE', 'effective_stake_pct': 100.0, 'holdco_discount': 0.0},
+                {'name': 'Retail', 'metric': 350000, 'multiple': 1.0, 'method': 'EV_EBITDA', 
+                 'valuation_level': 'ENTERPRISE_VALUE', 'effective_stake_pct': 67.0, 'holdco_discount': 0.30},
+            ],
+            net_debt=380000.0,
+            cash=180000.0,
+            minority_interest=0.0,
+            diluted_shares=676.5,
+            parent_standalone_debt=50000.0,
+            holdco_discount=0.30
+        )
+        
+        engine = SOTPEngine()
+        outputs = engine.calculate(inputs)
+        
+        # Check that sensitivity table is returned
+        assert hasattr(outputs, 'holdco_sensitivity')
+        assert outputs.holdco_sensitivity is not None
+        assert len(outputs.holdco_sensitivity) == 5  # 20%, 30%, 40%, 50%, 60%
+        
+        # Verify structure
+        for sens in outputs.holdco_sensitivity:
+            assert 'holdco_discount' in sens
+            assert 'fair_value_per_share' in sens
+            assert 'equity_value' in sens
+            assert sens['holdco_discount'] in [0.20, 0.30, 0.40, 0.50, 0.60]
+
+    def test_sotp_edge_zero_stake_pct(self):
+        """Zero stake_pct should contribute zero"""
+        inputs = SOTPInputs(
+            segments=[
+                {'name': 'SegA', 'metric': 100000, 'multiple': 1.0, 'method': 'EV_EBITDA', 
+                 'valuation_level': 'ENTERPRISE_VALUE', 'effective_stake_pct': 0.0, 'holdco_discount': 0.0},
+            ],
+            net_debt=0.0,
+            cash=0.0,
+            minority_interest=0.0,
+            diluted_shares=100.0,
+            parent_standalone_debt=0.0,
+            holdco_discount=0.0
+        )
+        
+        engine = SOTPEngine()
+        outputs = engine.calculate(inputs)
+        
+        assert outputs.total_ev == 0.0
+        assert outputs.equity_value == 0.0
+        assert outputs.fair_value_per_share == 0.0
+
+    def test_sotp_edge_100_percent_holdco_discount(self):
+        """100% holdco_discount should zero out segment"""
+        inputs = SOTPInputs(
+            segments=[
+                {'name': 'SegA', 'metric': 100000, 'multiple': 1.0, 'method': 'EV_EBITDA', 
+                 'valuation_level': 'ENTERPRISE_VALUE', 'effective_stake_pct': 100.0, 'holdco_discount': 1.0},
+            ],
+            net_debt=0.0,
+            cash=0.0,
+            minority_interest=0.0,
+            diluted_shares=100.0,
+            parent_standalone_debt=0.0,
+            holdco_discount=0.0
+        )
+        
+        engine = SOTPEngine()
+        outputs = engine.calculate(inputs)
+        
+        assert outputs.total_ev == 0.0
+
+    def test_sotp_segment_count_validation(self):
+        """Segment count should be validated (<= 10)"""
+        # This test will be validated at API level, but let's check engine handles it
+        segments = [
+            {'name': f'Seg{i}', 'metric': 1000, 'multiple': 1.0, 'method': 'EV_EBITDA', 
+             'valuation_level': 'ENTERPRISE_VALUE', 'effective_stake_pct': 100.0, 'holdco_discount': 0.0}
+            for i in range(11)  # 11 segments, should fail at API
+        ]
+        inputs = SOTPInputs(
+            segments=segments,
+            net_debt=0.0,
+            cash=0.0,
+            minority_interest=0.0,
+            diluted_shares=100.0,
+            parent_standalone_debt=0.0,
+            holdco_discount=0.0
+        )
+        
+        engine = SOTPEngine()
+        # Engine should still calculate (validation at API layer)
+        outputs = engine.calculate(inputs)
+        assert len(outputs.segment_values) == 11
+
 
 # ============================================================
 # BANKING VALUATION TESTS
