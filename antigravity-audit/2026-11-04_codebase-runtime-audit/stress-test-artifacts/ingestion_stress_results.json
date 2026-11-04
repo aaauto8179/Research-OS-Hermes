@@ -1,0 +1,197 @@
+[
+  {
+    "category": "Chunker",
+    "test_id": "CHUNK-01-SmallDoc",
+    "description": "Text smaller than window size",
+    "inputs": "{}",
+    "outcome": "PASS",
+    "details": {
+      "chunk_count": 1,
+      "text": "Quarterly earnings announcement for TCS Q3 FY25.",
+      "start": 0,
+      "end": 7
+    },
+    "is_bug": false,
+    "severity": "INFO",
+    "timestamp": "2026-11-04T13:35:13.738244"
+  },
+  {
+    "category": "Chunker",
+    "test_id": "CHUNK-02-EmptyDoc",
+    "description": "Empty text document string",
+    "inputs": "{}",
+    "outcome": "PASS",
+    "details": {
+      "chunk_count": 0
+    },
+    "is_bug": false,
+    "severity": "INFO",
+    "timestamp": "2026-11-04T13:35:13.738244"
+  },
+  {
+    "category": "Chunker",
+    "test_id": "CHUNK-03-WhitespaceDoc",
+    "description": "Whitespace-only document string",
+    "inputs": "{}",
+    "outcome": "PASS",
+    "details": {
+      "chunk_count": 0
+    },
+    "is_bug": false,
+    "severity": "INFO",
+    "timestamp": "2026-11-04T13:35:13.738244"
+  },
+  {
+    "category": "Chunker",
+    "test_id": "CHUNK-04-InfiniteLoopOverlap",
+    "description": "Infinite loop in SlidingWindowChunker when overlap >= chunk_size (hangs forever)",
+    "inputs": "{'chunk_size': 20, 'overlap': 20, 'words': 60}",
+    "outcome": "VULNERABILITY_CONFIRMED",
+    "details": {
+      "iterations_before_abort": 101,
+      "hung": true,
+      "root_cause": "start = end - overlap resets start to start + chunk_size - overlap = start. Loop condition `start < len(words)` never terminates."
+    },
+    "is_bug": true,
+    "severity": "CRITICAL",
+    "timestamp": "2026-11-04T13:35:13.738244"
+  },
+  {
+    "category": "Chunker",
+    "test_id": "CHUNK-05-NegativeStartJump",
+    "description": "Overlap > chunk_size causes negative index regression",
+    "inputs": "{'chunk_size': 20, 'overlap': 25}",
+    "outcome": "VULNERABILITY_CONFIRMED",
+    "details": {
+      "initial_start": 0,
+      "next_start": -5,
+      "backward": true
+    },
+    "is_bug": true,
+    "severity": "HIGH",
+    "timestamp": "2026-11-04T13:35:13.738244"
+  },
+  {
+    "category": "Chunker",
+    "test_id": "CHUNK-06-LargeDoc100KWords",
+    "description": "Large document buffer (100,000 words)",
+    "inputs": "{}",
+    "outcome": "PASS",
+    "details": {
+      "chunk_count": 217,
+      "elapsed_seconds": 0.022,
+      "expected_chunks": 217
+    },
+    "is_bug": false,
+    "severity": "INFO",
+    "timestamp": "2026-11-04T13:35:13.765052"
+  },
+  {
+    "category": "PIT",
+    "test_id": "PIT-01-CorruptedDateString",
+    "description": "datetime.fromisoformat raises unhandled ValueError on malformed date string",
+    "inputs": "{'date': 'not-a-date'}",
+    "outcome": "VULNERABILITY_CONFIRMED",
+    "details": {
+      "error": "Invalid isoformat string: 'not-a-date'"
+    },
+    "is_bug": true,
+    "severity": "HIGH",
+    "timestamp": "2026-11-04T13:35:13.766056"
+  },
+  {
+    "category": "PIT",
+    "test_id": "PIT-02-MissingDateField",
+    "description": "Missing and None date fields properly filtered",
+    "inputs": "{}",
+    "outcome": "PASS",
+    "details": {
+      "filtered_count": 1,
+      "included_ids": [
+        3
+      ]
+    },
+    "is_bug": false,
+    "severity": "INFO",
+    "timestamp": "2026-11-04T13:35:13.766056"
+  },
+  {
+    "category": "PIT",
+    "test_id": "PIT-03-NoneSourceDate",
+    "description": "tag_pit crashes with AttributeError on None source_date",
+    "inputs": "{'source_date': None}",
+    "outcome": "VULNERABILITY_CONFIRMED",
+    "details": {
+      "error": "'NoneType' object has no attribute 'isoformat'"
+    },
+    "is_bug": true,
+    "severity": "MEDIUM",
+    "timestamp": "2026-11-04T13:35:13.766056"
+  },
+  {
+    "category": "PIT",
+    "test_id": "PIT-04-FutureDatesFiltered",
+    "description": "Future dates excluded per PIT mandate",
+    "inputs": "{}",
+    "outcome": "PASS",
+    "details": {
+      "as_of_date": "2025-03-31",
+      "included_ids": [
+        1,
+        2
+      ],
+      "future_excluded": true
+    },
+    "is_bug": false,
+    "severity": "INFO",
+    "timestamp": "2026-11-04T13:35:13.766056"
+  },
+  {
+    "category": "PDF",
+    "test_id": "PDF-01-NonExistentFileMock",
+    "description": "PDFExtractor is an unintegrated placeholder/mock that ignores file_path",
+    "inputs": "{'file_path': 'non_existent_corrupted_sample.pdf'}",
+    "outcome": "MOCK_CONFIRMED",
+    "details": {
+      "returned_payload": {
+        "text": "Extracted text from PDF...",
+        "pages": 10,
+        "metadata": {
+          "title": "Document",
+          "author": "Unknown"
+        }
+      },
+      "defect": "Does not open or read any real PDF files. Always returns hardcoded 10 pages and dummy text."
+    },
+    "is_bug": true,
+    "severity": "LOW",
+    "timestamp": "2026-11-04T13:35:13.766056"
+  },
+  {
+    "category": "PDF",
+    "test_id": "PDF-02-TablesMock",
+    "description": "PDFExtractor.extract_tables returns hardcoded mock rows",
+    "inputs": "{}",
+    "outcome": "MOCK_CONFIRMED",
+    "details": {
+      "tables": [
+        {
+          "page": 1,
+          "rows": [
+            [
+              "Revenue",
+              "100"
+            ],
+            [
+              "EBITDA",
+              "20"
+            ]
+          ]
+        }
+      ]
+    },
+    "is_bug": true,
+    "severity": "LOW",
+    "timestamp": "2026-11-04T13:35:13.766056"
+  }
+]

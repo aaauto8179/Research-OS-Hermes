@@ -1,0 +1,499 @@
+[
+  {
+    "category": "DCF",
+    "test_id": "DCF-01-NegativeFCF",
+    "description": "Deeply negative cash flows across entire forecast horizon",
+    "inputs": "{'ebit_margin': -0.05, 'capex_pct': 0.3}",
+    "outcome": "COMPLETED",
+    "details": {
+      "fcff_year1": -3408.75,
+      "fcff_year10": -5288.090056216766,
+      "ev_gordon": -47918.91593123633,
+      "equity_value_gordon": -49518.91593123633,
+      "fair_value_gordon": -495.18915931236336,
+      "fair_value_multiple": -280.5849031718819,
+      "negative_price_returned": true
+    },
+    "is_bug": false,
+    "severity": "INFO",
+    "timestamp": "2026-11-04T13:34:11.429106"
+  },
+  {
+    "category": "DCF",
+    "test_id": "DCF-02-g0.0",
+    "description": "Terminal growth rate = 0.0",
+    "inputs": "{'terminal_growth_rate': 0.0}",
+    "outcome": "COMPLETED",
+    "details": {
+      "terminal_val_gordon": 5448.821120689656,
+      "ev_gordon": 5511.943581761511,
+      "fair_value_gordon": 97.23887163523023
+    },
+    "is_bug": false,
+    "severity": "INFO",
+    "timestamp": "2026-11-04T13:34:11.430107"
+  },
+  {
+    "category": "DCF",
+    "test_id": "DCF-02-g-0.02",
+    "description": "Terminal growth rate = -0.02",
+    "inputs": "{'terminal_growth_rate': -0.02}",
+    "outcome": "COMPLETED",
+    "details": {
+      "terminal_val_gordon": 4554.573419117648,
+      "ev_gordon": 4966.22472973945,
+      "fair_value_gordon": 86.32449459478899
+    },
+    "is_bug": false,
+    "severity": "INFO",
+    "timestamp": "2026-11-04T13:34:11.430107"
+  },
+  {
+    "category": "DCF",
+    "test_id": "DCF-02-g-0.05",
+    "description": "Terminal growth rate = -0.05",
+    "inputs": "{'terminal_growth_rate': -0.05}",
+    "outcome": "COMPLETED",
+    "details": {
+      "terminal_val_gordon": 3617.229442771085,
+      "ev_gordon": 4394.20617400548,
+      "fair_value_gordon": 74.8841234801096
+    },
+    "is_bug": false,
+    "severity": "INFO",
+    "timestamp": "2026-11-04T13:34:11.431357"
+  },
+  {
+    "category": "DCF",
+    "test_id": "DCF-03-WACC-g-guard",
+    "description": "WACC <= g guard triggered in validation",
+    "inputs": "{'terminal_growth_rate': 0.1}",
+    "outcome": "GUARD_TRIGGERED",
+    "details": {
+      "validation_errors": [
+        "terminal_growth_rate (0.1) must be < WACC (0.1010) - 0.005 (50 bps spread)"
+      ]
+    },
+    "is_bug": false,
+    "severity": "INFO",
+    "timestamp": "2026-11-04T13:34:11.431357"
+  },
+  {
+    "category": "DCF",
+    "test_id": "DCF-04-ZeroDebt",
+    "description": "Zero net debt scenario (EV == Equity Value)",
+    "inputs": "{}",
+    "outcome": "PASS",
+    "details": {
+      "ev_gordon": 5504.762199161221,
+      "equity_value_gordon": 5504.762199161221,
+      "exact_match": true
+    },
+    "is_bug": false,
+    "severity": "INFO",
+    "timestamp": "2026-11-04T13:34:11.432381"
+  },
+  {
+    "category": "DCF",
+    "test_id": "DCF-05-MassiveDebt",
+    "description": "Massive debt bridge produces negative fair value without guard",
+    "inputs": "{}",
+    "outcome": "PASS",
+    "details": {
+      "ev_gordon": 12683.36745360726,
+      "net_debt": 599950.0,
+      "equity_value_gordon": -587266.6325463927,
+      "fair_value_per_share": -11745.332650927854,
+      "negative_equity_unhandled": true
+    },
+    "is_bug": false,
+    "severity": "INFO",
+    "timestamp": "2026-11-04T13:34:11.432381"
+  },
+  {
+    "category": "Banking",
+    "test_id": "BANK-01-ZeroEquity",
+    "description": "Zero Book Value Per Share",
+    "inputs": "{}",
+    "outcome": "COMPLETED",
+    "details": {
+      "abvps": 0.0,
+      "justified_pb": 1.4285714285714286,
+      "implied_price": 0.0,
+      "predicted_pb": 1.333333333333333
+    },
+    "is_bug": false,
+    "severity": "INFO",
+    "timestamp": "2026-11-04T13:34:11.444633"
+  },
+  {
+    "category": "Banking",
+    "test_id": "BANK-02-NegativeNetWorth",
+    "description": "Negative Book Value clamped silently to zero ABVPS",
+    "inputs": "{}",
+    "outcome": "COMPLETED",
+    "details": {
+      "abvps": 0.0,
+      "implied_price": 0.0,
+      "clamped_to_zero_silently": true
+    },
+    "is_bug": true,
+    "severity": "MEDIUM",
+    "timestamp": "2026-11-04T13:34:11.444633"
+  },
+  {
+    "category": "Banking",
+    "test_id": "BANK-03-NetNPAExceedsBook",
+    "description": "Net NPA per share exceeds Book Value",
+    "inputs": "{}",
+    "outcome": "COMPLETED",
+    "details": {
+      "abvps": 0.0,
+      "implied_price": 0.0
+    },
+    "is_bug": false,
+    "severity": "INFO",
+    "timestamp": "2026-11-04T13:34:11.445630"
+  },
+  {
+    "category": "Banking",
+    "test_id": "BANK-04-NegativeROENormalizationBug",
+    "description": "Normalization flaw: negative ROE percentage (-15.0) fails `roe > 1.0` check and is not divided by 100",
+    "inputs": "{'input_roe': -15.0, 'input_ke': 12.0, 'input_g': 5.0}",
+    "outcome": "VULNERABILITY_CONFIRMED",
+    "details": {
+      "justified_pb": -215.00000000000003,
+      "expected_if_normalized": -2.857142857142857,
+      "actual_erroneous_pb": -215.00000000000003,
+      "formula_culprit": "roe = inputs.roe / 100.0 if inputs.roe > 1.0 else inputs.roe"
+    },
+    "is_bug": true,
+    "severity": "HIGH",
+    "timestamp": "2026-11-04T13:34:11.445630"
+  },
+  {
+    "category": "Banking",
+    "test_id": "BANK-05-ExtremePositiveROE",
+    "description": "150% ROE handled",
+    "inputs": "{}",
+    "outcome": "COMPLETED",
+    "details": {
+      "justified_pb": 20.714285714285715,
+      "implied_price": 2071.4285714285716
+    },
+    "is_bug": false,
+    "severity": "INFO",
+    "timestamp": "2026-11-04T13:34:11.445630"
+  },
+  {
+    "category": "Forensics",
+    "test_id": "ALTMAN-01-InfX4",
+    "description": "Infinite x4 from zero liabilities",
+    "inputs": "{}",
+    "outcome": "COMPLETED",
+    "details": {
+      "z_score": Infinity,
+      "zone": "SAFE"
+    },
+    "is_bug": false,
+    "severity": "INFO",
+    "timestamp": "2026-11-04T13:34:11.445630"
+  },
+  {
+    "category": "Forensics",
+    "test_id": "ALTMAN-02-NaNClassifiedAsSafe",
+    "description": "NaN inputs result in NaN z_score falling through to SAFE zone",
+    "inputs": "{'x1': 'NaN'}",
+    "outcome": "VULNERABILITY_CONFIRMED",
+    "details": {
+      "z_score": "nan",
+      "zone": "SAFE",
+      "fallthrough_flaw": "Comparison with NaN returns False, defaulting to 'else: zone = SAFE'"
+    },
+    "is_bug": true,
+    "severity": "CRITICAL",
+    "timestamp": "2026-11-04T13:34:11.445630"
+  },
+  {
+    "category": "Forensics",
+    "test_id": "ALTMAN-03-DeadCodeLiabilitiesGuard",
+    "description": "total_liabilities parameter has no effect on x4",
+    "inputs": "{}",
+    "outcome": "COMPLETED",
+    "details": {
+      "z_score": 2.744,
+      "zone": "GREY"
+    },
+    "is_bug": false,
+    "severity": "INFO",
+    "timestamp": "2026-11-04T13:34:11.445630"
+  },
+  {
+    "category": "Forensics",
+    "test_id": "BENEISH-01-GMI--5.0",
+    "description": "GMI clamping for input -5.0",
+    "inputs": "{}",
+    "outcome": "PASS",
+    "details": {
+      "input_gmi": -5.0,
+      "clamped_gmi": 0.1,
+      "m_score": -2.9551999999999996
+    },
+    "is_bug": false,
+    "severity": "INFO",
+    "timestamp": "2026-11-04T13:34:11.445630"
+  },
+  {
+    "category": "Forensics",
+    "test_id": "BENEISH-01-GMI-0.0",
+    "description": "GMI clamping for input 0.0",
+    "inputs": "{}",
+    "outcome": "PASS",
+    "details": {
+      "input_gmi": 0.0,
+      "clamped_gmi": 0.1,
+      "m_score": -2.9551999999999996
+    },
+    "is_bug": false,
+    "severity": "INFO",
+    "timestamp": "2026-11-04T13:34:11.445630"
+  },
+  {
+    "category": "Forensics",
+    "test_id": "BENEISH-01-GMI-0.05",
+    "description": "GMI clamping for input 0.05",
+    "inputs": "{}",
+    "outcome": "PASS",
+    "details": {
+      "input_gmi": 0.05,
+      "clamped_gmi": 0.1,
+      "m_score": -2.9551999999999996
+    },
+    "is_bug": false,
+    "severity": "INFO",
+    "timestamp": "2026-11-04T13:34:11.445630"
+  },
+  {
+    "category": "Forensics",
+    "test_id": "BENEISH-01-GMI-0.1",
+    "description": "GMI clamping for input 0.1",
+    "inputs": "{}",
+    "outcome": "PASS",
+    "details": {
+      "input_gmi": 0.1,
+      "clamped_gmi": 0.1,
+      "m_score": -2.9551999999999996
+    },
+    "is_bug": false,
+    "severity": "INFO",
+    "timestamp": "2026-11-04T13:34:11.445630"
+  },
+  {
+    "category": "Forensics",
+    "test_id": "BENEISH-01-GMI-2.5",
+    "description": "GMI clamping for input 2.5",
+    "inputs": "{}",
+    "outcome": "PASS",
+    "details": {
+      "input_gmi": 2.5,
+      "clamped_gmi": 2.5,
+      "m_score": -1.6879999999999997
+    },
+    "is_bug": false,
+    "severity": "INFO",
+    "timestamp": "2026-11-04T13:34:11.445630"
+  },
+  {
+    "category": "Forensics",
+    "test_id": "BENEISH-01-GMI-5.0",
+    "description": "GMI clamping for input 5.0",
+    "inputs": "{}",
+    "outcome": "PASS",
+    "details": {
+      "input_gmi": 5.0,
+      "clamped_gmi": 5.0,
+      "m_score": -0.36799999999999944
+    },
+    "is_bug": false,
+    "severity": "INFO",
+    "timestamp": "2026-11-04T13:34:11.445630"
+  },
+  {
+    "category": "Forensics",
+    "test_id": "BENEISH-01-GMI-10.0",
+    "description": "GMI clamping for input 10.0",
+    "inputs": "{}",
+    "outcome": "PASS",
+    "details": {
+      "input_gmi": 10.0,
+      "clamped_gmi": 5.0,
+      "m_score": -0.36799999999999944
+    },
+    "is_bug": false,
+    "severity": "INFO",
+    "timestamp": "2026-11-04T13:34:11.445630"
+  },
+  {
+    "category": "Forensics",
+    "test_id": "BENEISH-02-NegativeDepreciation",
+    "description": "Negative DEPI (-2.0) lowers M-Score",
+    "inputs": "{}",
+    "outcome": "COMPLETED",
+    "details": {
+      "m_score": -2.8249999999999997,
+      "signal": "MANIPULATION_UNLIKELY",
+      "depi_component": -0.23
+    },
+    "is_bug": false,
+    "severity": "INFO",
+    "timestamp": "2026-11-04T13:34:11.445630"
+  },
+  {
+    "category": "Forensics",
+    "test_id": "BENEISH-03-ExtremeAccruals",
+    "description": "Extreme TATA (2.5)",
+    "inputs": "{}",
+    "outcome": "PASS",
+    "details": {
+      "m_score": 9.217500000000001,
+      "signal": "MANIPULATION_LIKELY",
+      "flagged": true
+    },
+    "is_bug": false,
+    "severity": "INFO",
+    "timestamp": "2026-11-04T13:34:11.445630"
+  },
+  {
+    "category": "Forensics",
+    "test_id": "BENEISH-04-NaNManipUnlikely",
+    "description": "NaN inputs result in NaN M-Score defaulting to MANIPULATION_UNLIKELY",
+    "inputs": "{'dsri': 'NaN'}",
+    "outcome": "VULNERABILITY_CONFIRMED",
+    "details": {
+      "m_score": "nan",
+      "signal": "MANIPULATION_UNLIKELY",
+      "fallthrough_flaw": "nan > -1.78 is False, so signal becomes MANIPULATION_UNLIKELY"
+    },
+    "is_bug": true,
+    "severity": "HIGH",
+    "timestamp": "2026-11-04T13:34:11.445630"
+  },
+  {
+    "category": "Forensics",
+    "test_id": "PIOTROSKI-01-Boundaries",
+    "description": "Boundary 0 and 9 verified",
+    "inputs": "{}",
+    "outcome": "PASS",
+    "details": {
+      "f_score_0": 0,
+      "f_score_9": 9
+    },
+    "is_bug": false,
+    "severity": "INFO",
+    "timestamp": "2026-11-04T13:34:11.445630"
+  },
+  {
+    "category": "Forensics",
+    "test_id": "PIOTROSKI-02-NoneInputs",
+    "description": "int(None) raises TypeError when prior year data is missing (None passed)",
+    "inputs": "{'roa_improving': None}",
+    "outcome": "VULNERABILITY_CONFIRMED",
+    "details": {
+      "error": "int() argument must be a string, a bytes-like object or a real number, not 'NoneType'",
+      "root_cause": "int(inputs.roa_improving) crashes on None"
+    },
+    "is_bug": true,
+    "severity": "MEDIUM",
+    "timestamp": "2026-11-04T13:34:11.445630"
+  },
+  {
+    "category": "CorporateActions",
+    "test_id": "CA-01-BonusFractional",
+    "description": "Bonus 1:2 with odd holding (11 shares)",
+    "inputs": "{}",
+    "outcome": "PASS",
+    "details": {
+      "new_qty": 16,
+      "fractional_cash_credit": 800.0
+    },
+    "is_bug": false,
+    "severity": "INFO",
+    "timestamp": "2026-11-04T13:34:11.445630"
+  },
+  {
+    "category": "CorporateActions",
+    "test_id": "CA-02-ZeroRatioSplit",
+    "description": "Zero ratio split triggers unhandled ZeroDivisionError in new_avg_cost = avg_price / factor",
+    "inputs": "{'ratio': 0.0}",
+    "outcome": "VULNERABILITY_CONFIRMED",
+    "details": {
+      "error": "float division by zero"
+    },
+    "is_bug": true,
+    "severity": "MEDIUM",
+    "timestamp": "2026-11-04T13:34:11.445630"
+  },
+  {
+    "category": "CorporateActions",
+    "test_id": "CA-03-DemergerNegativeParentCost",
+    "description": "Transferred book value exceeds net worth causing negative parent cost of acquisition",
+    "inputs": "{'net_book_value_transferred': 120.0, 'pre_demerger_net_worth': 100.0}",
+    "outcome": "VULNERABILITY_CONFIRMED",
+    "details": {
+      "parent_avg_cost": -20.0,
+      "spinoff_avg_cost": 120.0,
+      "alpha": 1.2,
+      "tax_consequence": "Section 49(2C) prohibits negative cost of acquisition"
+    },
+    "is_bug": true,
+    "severity": "HIGH",
+    "timestamp": "2026-11-04T13:34:11.445630"
+  },
+  {
+    "category": "RatioAnalysis",
+    "test_id": "RATIO-01-DistressCompany",
+    "description": "Zero revenue & negative net worth ratio handling",
+    "inputs": "{}",
+    "outcome": "PASS",
+    "details": {
+      "distress_flags": [
+        "NEGATIVE_NET_WORTH",
+        "NEGATIVE_NET_WORTH",
+        "OPERATIONAL_DISTRESS",
+        "LOSS_MAKING"
+      ],
+      "has_neg_net_worth": true,
+      "dupont_status": "NM"
+    },
+    "is_bug": false,
+    "severity": "INFO",
+    "timestamp": "2026-11-04T13:34:11.446630"
+  },
+  {
+    "category": "Turnaround",
+    "test_id": "TURN-01-ZeroSplitFactor",
+    "description": "Zero split factor handled",
+    "inputs": "{}",
+    "outcome": "PASS",
+    "details": {
+      "score": 0.0
+    },
+    "is_bug": false,
+    "severity": "INFO",
+    "timestamp": "2026-11-04T13:34:11.446630"
+  },
+  {
+    "category": "Relative",
+    "test_id": "REL-01-AllPeersLossMakers",
+    "description": "All peers loss makers excluded (harmonic mean returns NaN)",
+    "inputs": "{}",
+    "outcome": "PASS",
+    "details": {
+      "peer_ev_ebitda_median": "nan",
+      "nan_handled_safely": true
+    },
+    "is_bug": false,
+    "severity": "INFO",
+    "timestamp": "2026-11-04T13:34:11.452231"
+  }
+]

@@ -1,0 +1,126 @@
+﻿{
+  "test_1_beneish": {
+    "lvgi_legacy": 2.0,
+    "lvgi_correct": 0.10714285714285715,
+    "m_with_legacy_lvgi": -0.9694599999999997,
+    "m_with_correct_lvgi": -1.0313564285714283,
+    "gmi_raw": -2.5,
+    "m_depressed_by_negative_gmi": -2.3548599999999995,
+    "m_safeguarded": 0.2851400000000004,
+    "status": "PASS"
+  },
+  "test_2_banking": {
+    "pb_flawed": 138.5,
+    "price_flawed": 80330.0,
+    "pb_normalized": 2.177,
+    "price_normalized_raw_bvps": 1262.66,
+    "scaling_error_ratio": 63.619660082682586,
+    "abvps": 520.0,
+    "price_with_abvps": 1132.04,
+    "status": "PASS"
+  },
+  "test_3_dcf": {
+    "pv_year_end": 4667.082801483384,
+    "pv_mid_year": 4939.176176348666,
+    "empirical_ratio": 1.058300524425836,
+    "theoretical_ratio": 1.0583005244258363,
+    "undervaluation_pct": 5.508881747693178,
+    "tv_singularity_curve": {
+      "spread_500bps": 35360.0,
+      "spread_200bps": 88400.00000000001,
+      "spread_50bps": 353600.0000000002,
+      "spread_10bps": 1767999.9999999984,
+      "spread_1bps": 17679999.999999493,
+      "spread_0bps": "DIV_ZERO (Singularity)",
+      "spread_-100bps": -176799.99999999997
+    },
+    "status": "PASS"
+  },
+  "test_4_harmonic_pe": {
+    "arithmetic_pe_prof": 3010.8333333333335,
+    "harmonic_pe_prof": 17.136736879685827,
+    "distortion_factor": 175.69467013888888,
+    "aggregate_pe_all": 33.31482509716824,
+    "aggregate_pe_insolvent": "N/A (Loss-Making Sector)",
+    "status": "PASS"
+  },
+  "test_5_passthrough": {
+    "scenarios": [
+      {
+        "scenario": "Cost Inflation + Price Hike (+10% cost, +10% price)",
+        "legacy": 1.0,
+        "audit": 1.0
+      },
+      {
+        "scenario": "Cost Inflation + Partial Hike (+10% cost, +5% price)",
+        "legacy": 0.5,
+        "audit": 0.5
+      },
+      {
+        "scenario": "Cost Deflation + Hold Price (-15% cost, 0% price)",
+        "legacy": -0.0,
+        "audit": 1.15
+      },
+      {
+        "scenario": "Cost Deflation + Hike Price (-15% cost, +2% price)",
+        "legacy": -0.13333333333333333,
+        "audit": 1.17
+      },
+      {
+        "scenario": "Cost Deflation + Crushed Price (-15% cost, -25% price)",
+        "legacy": 1.6666666666666667,
+        "audit": 0.9
+      }
+    ],
+    "status": "PASS"
+  },
+  "test_6_corporate_actions": {
+    "portfolio_value_before": 1800000.0,
+    "legacy_portfolio_value": 1760000.0,
+    "capital_destroyed": 40000.0,
+    "sebi_whole_shares": 22,
+    "sebi_fractional_shares": 0.5,
+    "fractional_cash_credit": 40000.0,
+    "sebi_total_value": 1800000.0,
+    "status": "PASS"
+  },
+  "test_7_tax": {
+    "stcg_pre_tax": 7500.0,
+    "stcg_post_tax": 10000.0,
+    "tax_1_under_exemption": 0.0,
+    "tax_2_over_exemption": 9375.0,
+    "sec55_case_a": {
+      "holding_days": 3141,
+      "is_ltcg": true,
+      "regime": "LTCG_POST_BUDGET",
+      "rate": 0.125,
+      "effective_coa": 960.0,
+      "total_gain": 44000.0
+    },
+    "sec55_case_b": {
+      "holding_days": 3141,
+      "is_ltcg": true,
+      "regime": "LTCG_POST_BUDGET",
+      "rate": 0.125,
+      "effective_coa": 800.0,
+      "total_gain": 0.0
+    },
+    "sec55_case_c": {
+      "holding_days": 3141,
+      "is_ltcg": true,
+      "regime": "LTCG_POST_BUDGET",
+      "rate": 0.125,
+      "effective_coa": 500.0,
+      "total_gain": -10000.0
+    },
+    "sec55_case_d": {
+      "holding_days": 3141,
+      "is_ltcg": true,
+      "regime": "LTCG_POST_BUDGET",
+      "rate": 0.125,
+      "effective_coa": 500.0,
+      "total_gain": -10000.0
+    },
+    "status": "PASS"
+  }
+}
