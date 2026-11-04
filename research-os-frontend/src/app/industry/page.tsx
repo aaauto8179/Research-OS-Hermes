@@ -147,13 +147,19 @@ function IndustryCard({ industry, onClick }: { industry: any; onClick: () => voi
 
 function IndustryDetail({ industryCode, onBack }: { industryCode: string; onBack: () => void }) {
   const industryWidgets = [
-    "industry-overview",
-    "demand-drivers",
-    "sector-heatmap",
-    "peer-comparison-table",
-    "value-chain-mapper",
-    "margin-bridge",
-  ];
+      "industry-overview",
+      "demand-drivers",
+      "sector-heatmap",
+      "peer-comparison-table",
+      "value-chain-mapper",
+      "margin-bridge",
+      "demand-table",
+      "supply-table",
+      "regulations-widget",
+      "cost-drivers",
+      "cost-comparison",
+      "industry-aggregate",
+    ];
 
   return (
     <div className="flex-1 flex flex-col">

@@ -67,6 +67,33 @@ const FilteredTable = dynamic(() => import("./FilteredTable"), { loading: () => 
 const MultiTextBox = dynamic(() => import("./MultiTextBox"), { loading: () => <WidgetSkeleton /> });
 const SimpleTextBox = dynamic(() => import("./SimpleTextBox"), { loading: () => <WidgetSkeleton /> });
 const UIPrimitives = dynamic(() => import("./UIPrimitives"), { loading: () => <WidgetSkeleton /> });
+const DecisionTerminal = dynamic(() => import("./DecisionTerminal"), { loading: () => <WidgetSkeleton /> });
+const TrackingTable = dynamic(() => import("./TrackingTable"), { loading: () => <WidgetSkeleton /> });
+const LatestChanges = dynamic(() => import("./LatestChanges"), { loading: () => <WidgetSkeleton /> });
+const TrackRecord = dynamic(() => import("./TrackRecord"), { loading: () => <WidgetSkeleton /> });
+const CapitalAllocation = dynamic(() => import("./CapitalAllocation"), { loading: () => <WidgetSkeleton /> });
+const KeyFragilityPoints = dynamic(() => import("./KeyFragilityPoints"), { loading: () => <WidgetSkeleton /> });
+const LegalChecks = dynamic(() => import("./LegalChecks"), { loading: () => <WidgetSkeleton /> });
+const ConcallTracker = dynamic(() => import("./ConcallTracker"), { loading: () => <WidgetSkeleton /> });
+const RecentEvents = dynamic(() => import("./RecentEvents"), { loading: () => <WidgetSkeleton /> });
+const ExitTool = dynamic(() => import("./ExitTool"), { loading: () => <WidgetSkeleton /> });
+const ValuationPhilosophy = dynamic(() => import("./ValuationPhilosophy"), { loading: () => <WidgetSkeleton /> });
+const SegmentBreakup = dynamic(() => import("./SegmentBreakup"), { loading: () => <WidgetSkeleton /> });
+const CompanyInfo = dynamic(() => import("./CompanyInfo"), { loading: () => <WidgetSkeleton /> });
+const OnGroundResearch = dynamic(() => import("./OnGroundResearch"), { loading: () => <WidgetSkeleton /> });
+const ManagementCompensation = dynamic(() => import("./ManagementCompensation"), { loading: () => <WidgetSkeleton /> });
+const BoardStructure = dynamic(() => import("./BoardStructure"), { loading: () => <WidgetSkeleton /> });
+const AssessAuditor = dynamic(() => import("./AssessAuditor"), { loading: () => <WidgetSkeleton /> });
+const CustomerConcentration = dynamic(() => import("./CustomerConcentration"), { loading: () => <WidgetSkeleton /> });
+const CostBreakup = dynamic(() => import("./CostBreakup"), { loading: () => <WidgetSkeleton /> });
+const WCBreakup = dynamic(() => import("./WCBreakup"), { loading: () => <WidgetSkeleton /> });
+const KeyEvents = dynamic(() => import("./KeyEvents"), { loading: () => <WidgetSkeleton /> });
+const DemandTable = dynamic(() => import("./DemandTable"), { loading: () => <WidgetSkeleton /> });
+const SupplyTable = dynamic(() => import("./SupplyTable"), { loading: () => <WidgetSkeleton /> });
+const RegulationsWidget = dynamic(() => import("./RegulationsWidget"), { loading: () => <WidgetSkeleton /> });
+const CostDrivers = dynamic(() => import("./CostDrivers"), { loading: () => <WidgetSkeleton /> });
+const CostComparison = dynamic(() => import("./CostComparison"), { loading: () => <WidgetSkeleton /> });
+const IndustryAggregate = dynamic(() => import("./IndustryAggregate"), { loading: () => <WidgetSkeleton /> });
 
 function WidgetSkeleton() {
   return (
@@ -138,6 +165,33 @@ export const WIDGET_REGISTRY: Record<string, React.ComponentType<any>> = {
   "multi-text-box": MultiTextBox,
   "simple-text-box": SimpleTextBox,
   "ui-primitives": UIPrimitives,
+  "decision-terminal": DecisionTerminal,
+  "tracking-table": TrackingTable,
+  "latest-changes": LatestChanges,
+  "track-record": TrackRecord,
+  "capital-allocation": CapitalAllocation,
+  "key-fragility-points": KeyFragilityPoints,
+  "legal-checks": LegalChecks,
+  "concall-tracker": ConcallTracker,
+  "recent-events": RecentEvents,
+  "exit-tool": ExitTool,
+  "valuation-philosophy": ValuationPhilosophy,
+  "segment-breakup": SegmentBreakup,
+  "company-info": CompanyInfo,
+  "on-ground-research": OnGroundResearch,
+  "management-compensation": ManagementCompensation,
+  "board-structure": BoardStructure,
+  "assess-auditor": AssessAuditor,
+  "customer-concentration": CustomerConcentration,
+  "cost-breakup": CostBreakup,
+  "wc-breakup": WCBreakup,
+  "key-events": KeyEvents,
+  "demand-table": DemandTable,
+  "supply-table": SupplyTable,
+  "regulations-widget": RegulationsWidget,
+  "cost-drivers": CostDrivers,
+  "cost-comparison": CostComparison,
+  "industry-aggregate": IndustryAggregate,
 };
 
 export function WidgetRenderer({ type, props, ...rest }: { type: string; props?: any; [key: string]: any }) {
