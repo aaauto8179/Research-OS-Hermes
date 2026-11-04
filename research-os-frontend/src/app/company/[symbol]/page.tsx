@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { WidgetRenderer } from "@/components/widgets/WidgetRegistry";
 
@@ -16,7 +17,7 @@ const TAB_CONTENT: Record<string, string[]> = {
   downsides: ["risk-assessment", "checklist", "hedging-mechanism", "forensic-flags"],
 };
 
-export default function CompanyPage() {
+function CompanyPageContent() {
   const searchParams = useSearchParams();
   const tab = searchParams?.get("tab") || "overview";
   const widgets = TAB_CONTENT[tab] || TAB_CONTENT.overview;
@@ -29,5 +30,13 @@ export default function CompanyPage() {
         </div>
       ))}
     </div>
+  );
+}
+
+export default function CompanyPage() {
+  return (
+    <Suspense fallback={<div className="p-4">Loading...</div>}>
+      <CompanyPageContent />
+    </Suspense>
   );
 }

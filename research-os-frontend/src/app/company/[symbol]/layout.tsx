@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 
