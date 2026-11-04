@@ -2,6 +2,7 @@
 Vercel Python entry point for Math Engine Service.
 Handles DCF, Screening, and other financial calculations.
 """
+import dataclasses
 import json
 import os
 import sys
@@ -9,9 +10,27 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
+import math
+from typing import Any
+
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse as _BaseJSONResponse
+
+
+def _clean_nans(obj: Any) -> Any:
+    if isinstance(obj, float) and (math.isnan(obj) or math.isinf(obj)):
+        return None
+    if isinstance(obj, dict):
+        return {k: _clean_nans(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_clean_nans(v) for v in obj]
+    return obj
+
+
+class JSONResponse(_BaseJSONResponse):
+    def render(self, content: Any) -> bytes:
+        return super().render(_clean_nans(content))
 
 from math_engine import (
     DCFEngine, DCFInputs,
@@ -56,7 +75,7 @@ async def dcf(request: Request):
     inputs = DCFInputs(**data)
     engine = DCFEngine()
     outputs = engine.calculate(inputs)
-    return JSONResponse(content=outputs.model_dump())
+    return JSONResponse(content=dataclasses.asdict(outputs))
 
 
 @app.post("/screening")
@@ -66,7 +85,7 @@ async def screening(request: Request):
     engine = ScreeningEngine()
     universe = data.get("companies", [])
     results = engine.calculate(universe, criteria)
-    return JSONResponse(content={"results": [r.model_dump() for r in results]})
+    return JSONResponse(content={"results": [dataclasses.asdict(r) for r in results]})
 
 
 @app.post("/relative")
@@ -75,7 +94,7 @@ async def relative(request: Request):
     inputs = RelativeValuationInputs(**data)
     engine = RelativeValuationEngine()
     outputs = engine.calculate(inputs)
-    return JSONResponse(content=outputs.model_dump())
+    return JSONResponse(content=dataclasses.asdict(outputs))
 
 
 @app.post("/sotp")
@@ -84,7 +103,7 @@ async def sotp(request: Request):
     inputs = SOTPInputs(**data)
     engine = SOTPEngine()
     outputs = engine.calculate(inputs)
-    return JSONResponse(content=outputs.model_dump())
+    return JSONResponse(content=dataclasses.asdict(outputs))
 
 
 @app.post("/banking")
@@ -93,7 +112,7 @@ async def banking(request: Request):
     inputs = BankingValuationInputs(**data)
     engine = BankingValuationEngine()
     outputs = engine.calculate(inputs)
-    return JSONResponse(content=outputs.model_dump())
+    return JSONResponse(content=dataclasses.asdict(outputs))
 
 
 @app.post("/excess-return")
@@ -102,7 +121,7 @@ async def excess_return(request: Request):
     inputs = ExcessReturnInputs(**data)
     engine = ExcessReturnEngine()
     outputs = engine.calculate(inputs)
-    return JSONResponse(content=outputs.model_dump())
+    return JSONResponse(content=dataclasses.asdict(outputs))
 
 
 @app.post("/beneish")
@@ -111,7 +130,7 @@ async def beneish(request: Request):
     inputs = BeneishInputs(**data)
     engine = BeneishEngine()
     result = engine.calculate(inputs)
-    return JSONResponse(content=result.model_dump())
+    return JSONResponse(content=dataclasses.asdict(result))
 
 
 @app.post("/altman")
@@ -120,7 +139,7 @@ async def altman(request: Request):
     inputs = AltmanZInputs(**data)
     engine = AltmanZEngine()
     result = engine.calculate(inputs)
-    return JSONResponse(content=result.model_dump())
+    return JSONResponse(content=dataclasses.asdict(result))
 
 
 @app.post("/piotroski")
@@ -129,7 +148,7 @@ async def piotroski(request: Request):
     inputs = PiotroskiInputs(**data)
     engine = PiotroskiEngine()
     result = engine.calculate(inputs)
-    return JSONResponse(content=result.model_dump())
+    return JSONResponse(content=dataclasses.asdict(result))
 
 
 @app.post("/portfolio")
@@ -138,7 +157,7 @@ async def portfolio(request: Request):
     inputs = PortfolioMetricsInputs(**data)
     engine = PortfolioAnalyticsEngine()
     result = engine.calculate(inputs)
-    return JSONResponse(content=result.model_dump())
+    return JSONResponse(content=dataclasses.asdict(result))
 
 
 @app.post("/corporate-actions")
@@ -158,7 +177,7 @@ async def ratio_analysis(request: Request):
     inputs = RatioAnalysisInputs(**data)
     engine = RatioAnalysisEngine()
     result = engine.calculate(inputs)
-    return JSONResponse(content=result.model_dump())
+    return JSONResponse(content=dataclasses.asdict(result))
 
 
 @app.post("/turnaround")
@@ -167,7 +186,7 @@ async def turnaround(request: Request):
     inputs = TurnaroundInputs(**data)
     engine = TurnaroundEngine()
     result = engine.calculate(inputs)
-    return JSONResponse(content=result.model_dump())
+    return JSONResponse(content=dataclasses.asdict(result))
 
 
 @app.post("/hedging")
@@ -176,7 +195,7 @@ async def hedging(request: Request):
     inputs = HedgingInputs(**data)
     engine = HedgingEngine()
     result = engine.calculate(inputs)
-    return JSONResponse(content=result.model_dump())
+    return JSONResponse(content=dataclasses.asdict(result))
 
 
 @app.post("/risk-score")
@@ -185,7 +204,7 @@ async def risk_score(request: Request):
     inputs = RiskScoreInputs(**data)
     engine = RiskScoreEngine()
     result = engine.calculate(inputs)
-    return JSONResponse(content=result.model_dump())
+    return JSONResponse(content=dataclasses.asdict(result))
 
 
 @app.post("/common-size")
@@ -194,7 +213,7 @@ async def common_size(request: Request):
     inputs = CommonSizeInputs(**data)
     engine = CommonSizeEngine()
     result = engine.calculate(inputs)
-    return JSONResponse(content=result.model_dump())
+    return JSONResponse(content=dataclasses.asdict(result))
 
 
 @app.post("/revenue-projection")
@@ -203,7 +222,7 @@ async def revenue_projection(request: Request):
     inputs = RevenueProjectionInputs(**data)
     engine = RevenueProjectionEngine()
     result = engine.calculate(inputs)
-    return JSONResponse(content=result.model_dump())
+    return JSONResponse(content=dataclasses.asdict(result))
 
 
 @app.post("/concall-consistency")
@@ -212,7 +231,7 @@ async def concall_consistency(request: Request):
     inputs = ConcallConsistencyInputs(**data)
     engine = ConcallConsistencyEngine()
     result = engine.calculate(inputs)
-    return JSONResponse(content=result.model_dump())
+    return JSONResponse(content=dataclasses.asdict(result))
 
 
 @app.websocket("/ws/prices")
