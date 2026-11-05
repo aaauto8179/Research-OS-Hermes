@@ -1,7 +1,10 @@
+"use client";
+
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 
-const items = [
+const initialItems = [
   { id: "1", label: "Business model understood", checked: true },
   { id: "2", label: "Management quality verified", checked: true },
   { id: "3", label: "Financials audited (3 years)", checked: true },
@@ -11,15 +14,40 @@ const items = [
 ];
 
 export default function Checklist() {
+  const [items, setItems] = useState(initialItems);
+
+  const toggleItem = (id: string) => {
+    setItems((prev) =>
+      prev.map((item) =>
+        item.id === id ? { ...item, checked: !item.checked } : item
+      )
+    );
+  };
+
   return (
     <Card className="h-full">
-      <CardHeader><CardTitle>Investment Checklist</CardTitle></CardHeader>
+      <CardHeader>
+        <CardTitle className="text-base font-semibold">Investment Checklist</CardTitle>
+      </CardHeader>
       <CardContent>
-        <div className="space-y-2">
+        <div className="space-y-2.5">
           {items.map((item) => (
-            <div key={item.id} className="flex items-center gap-2">
-              <Checkbox checked={item.checked} />
-              <span className={`text-sm ${item.checked ? "line-through text-muted-foreground" : ""}`}>{item.label}</span>
+            <div
+              key={item.id}
+              className="flex items-center gap-2.5 cursor-pointer select-none"
+              onClick={() => toggleItem(item.id)}
+            >
+              <Checkbox
+                checked={item.checked}
+                onChange={() => toggleItem(item.id)}
+              />
+              <span
+                className={`text-sm transition-colors ${
+                  item.checked ? "line-through text-muted-foreground" : "text-foreground"
+                }`}
+              >
+                {item.label}
+              </span>
             </div>
           ))}
         </div>

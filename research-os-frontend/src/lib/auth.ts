@@ -4,6 +4,7 @@ import type { User, Session } from "next-auth";
 import type { JWT } from "next-auth/jwt";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || "research-os-development-secret-key-32chars",
   providers: [
     Credentials({
       credentials: {

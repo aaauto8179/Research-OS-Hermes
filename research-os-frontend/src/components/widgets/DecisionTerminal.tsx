@@ -3,5 +3,5 @@
 import GenericWidget from "./GenericWidget";
 
 export default function DecisionTerminal() {
-  return <GenericWidget title="Decision Terminal" description="Tag conviction based on 3 parameters" columns={[' + ', '.join(repr(c) for c in cols) + ']} />;
+  return <GenericWidget title="Decision Terminal" description="Tag conviction based on 3 parameters" columns={['Item', 'Details', 'Impact', 'Notes']} />;
 }

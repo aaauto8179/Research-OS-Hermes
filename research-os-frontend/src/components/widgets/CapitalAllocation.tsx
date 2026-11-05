@@ -3,5 +3,5 @@
 import GenericWidget from "./GenericWidget";
 
 export default function CapitalAllocation() {
-  return <GenericWidget title="Capital Allocation" description="Capital allocation quality assessment" columns={[' + ', '.join(repr(c) for c in cols) + ']} />;
+  return <GenericWidget title="Capital Allocation" description="Capital allocation quality assessment" columns={['Item', 'Details', 'Impact', 'Notes']} />;
 }

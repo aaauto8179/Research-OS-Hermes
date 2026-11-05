@@ -38,6 +38,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+try:
+    from api.workstation_router import router as workstation_router
+except ImportError:
+    from workstation_router import router as workstation_router
+
+app.include_router(workstation_router)
+
 # Seed realistic fixtures if available
 def seed_default_fixtures():
     store = StatementStore.get_instance()
